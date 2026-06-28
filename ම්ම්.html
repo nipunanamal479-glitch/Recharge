@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Digital System</title>
+    <style>
+        /* CSS කොටස මෙතනයි */
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0f172a, #312e81);
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .login-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .glass-box {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(15px);
+            padding: 50px;
+            border-radius: 25px;
+            text-align: center;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            width: 300px;
+        }
+
+        h1 { margin-bottom: 10px; }
+
+        .google-btn {
+            margin-top: 30px;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #333;
+            transition: 0.3s;
+            width: 100%;
+        }
+
+        .google-btn:hover {
+            transform: scale(1.05);
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <div class="glass-box">
+            <h1>Welcome</h1>
+            <p>Access your digital services</p>
+            
+            <button class="google-btn" onclick="login()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20">
+                Sign in with Google
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const CLIENT_ID = 'YOUR_CLIENT_ID_HERE.apps.googleusercontent.com';
+
+        function login() {
+            const redirectUri = window.location.origin + window.location.pathname;
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email profile&prompt=consent`;
+            window.location.href = authUrl;
+        }
+
+        window.onload = function() {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            const token = params.get('access_token');
+
+            if (token) {
+                fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        alert("සාර්ථකව පිවිසුණි: " + data.name);
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+        };
+    </script>
+</body>
+</html>
