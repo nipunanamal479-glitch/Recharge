@@ -22,6 +22,7 @@ const CONFIG = {
   // localStorage keys
   STORAGE_KEYS: {
     TOKEN: "dr_auth_token",
-    USER: "dr_user_info"
+    USER: "dr_user_info",
+    WALLET: "dr_wallet"
   }
 };
