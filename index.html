@@ -1,44 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Recharge</title>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript">(function(){ emailjs.init("HahSYzYSEJF5oRsnt"); })();</script>
     <style>
         body { margin: 0; background: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .glass { background: rgba(255, 255, 255, 0.1); padding: 25px; border-radius: 20px; width: 320px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-        .btn { background: #6366f1; color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; margin-top: 10px; cursor: pointer; }
-        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .card-box { background: #1e293b; border: 1px solid #4f46e5; padding: 15px; border-radius: 10px; cursor: pointer; }
+        .glass { background: #1e293b; padding: 20px; border-radius: 15px; width: 350px; border: 1px solid #334155; position: relative; }
+        .header { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; }
+        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .card-btn { background: #334155; border: 1px solid #475569; color: white; padding: 15px; border-radius: 8px; cursor: pointer; }
+        /* Account menu එකේ පෙනුම */
+        #acc-menu { position: absolute; right: 20px; top: 50px; background: #334155; padding: 10px; border-radius: 8px; display: none; }
     </style>
 </head>
 <body>
-    <div id="app" class="glass">
-        <div id="login-view"><h1>Welcome</h1><button class="btn" onclick="login()">Sign in with Google</button></div>
-        <div id="dash-view" style="display:none;">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <span>Digital Recharge</span>
-                <span onclick="logout()" style="cursor:pointer; color:#ef4444;">Logout</span>
-            </div>
-            <div id="card-list" class="card-grid"></div>
+    <div id="dash-view" class="glass">
+        <div class="header">
+            <span>Digital Recharge</span>
+            <span onclick="toggleMenu()" style="cursor:pointer;">Account</span>
         </div>
+        <div id="acc-menu"><span onclick="logout()" style="color:#f87171; cursor:pointer;">Logout</span></div>
+        <div id="card-list" class="card-grid"></div>
     </div>
     <script src="data.js"></script>
     <script>
-        function login() { window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=12019111383-058lqu79k9jvbdcq7brqql1ukt1028l8.apps.googleusercontent.com&redirect_uri=${window.location.origin}${window.location.pathname}&response_type=token&scope=email profile&prompt=consent`; }
+        function toggleMenu() { document.getElementById('acc-menu').style.display = (document.getElementById('acc-menu').style.display === 'block') ? 'none' : 'block'; }
         function logout() { localStorage.removeItem('user_token'); location.reload(); }
-        window.onload = () => {
-            const params = new URLSearchParams(window.location.hash.substring(1));
-            const token = params.get('access_token');
-            if (token) localStorage.setItem('user_token', token);
-            if (localStorage.getItem('user_token')) {
-                document.getElementById('login-view').style.display = 'none';
-                document.getElementById('dash-view').style.display = 'block';
-                renderCards();
-            }
-        };
+        renderCards();
     </script>
 </body>
 </html>
