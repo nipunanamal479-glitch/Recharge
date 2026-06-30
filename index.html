@@ -151,6 +151,7 @@
     border-bottom: 1px solid var(--border);
     margin-bottom: 8px;
     word-break: break-word;
+    white-space: pre-line;
   }
 
   #logoutBtn {
@@ -411,9 +412,45 @@
     font-size: 13.5px;
     font-weight: 700;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
   }
   .wallet-generate-btn:hover { background: var(--accent-hover); }
-  .wallet-generate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .wallet-generate-btn:disabled { opacity: 0.85; cursor: not-allowed; }
+
+  .wallet-row-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .wallet-reset-btn {
+    flex: 0 0 auto;
+    background: var(--panel-glass);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .wallet-reset-btn:hover { color: var(--text); border-color: var(--danger); }
+
+  .btn-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: btn-spin 0.7s linear infinite;
+    display: inline-block;
+  }
+
+  @keyframes btn-spin {
+    to { transform: rotate(360deg); }
+  }
 
   .wallet-empty {
     text-align: center;
@@ -421,12 +458,109 @@
     font-size: 14px;
     padding: 30px 10px;
   }
+
+  /* ---------- Boot Loader ---------- */
+  #bootLoader {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .flower-spinner {
+    position: relative;
+    width: 56px;
+    height: 56px;
+  }
+
+  .flower-spinner .petal {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 8px;
+    height: 20px;
+    margin-left: -4px;
+    border-radius: 4px;
+    background: var(--accent);
+    transform-origin: 4px 28px;
+    animation: petal-fade 1s linear infinite;
+  }
+
+  .flower-spinner .petal:nth-child(1) { transform: rotate(0deg);   animation-delay: -0.875s; }
+  .flower-spinner .petal:nth-child(2) { transform: rotate(45deg);  animation-delay: -0.75s; }
+  .flower-spinner .petal:nth-child(3) { transform: rotate(90deg);  animation-delay: -0.625s; }
+  .flower-spinner .petal:nth-child(4) { transform: rotate(135deg); animation-delay: -0.5s; }
+  .flower-spinner .petal:nth-child(5) { transform: rotate(180deg); animation-delay: -0.375s; }
+  .flower-spinner .petal:nth-child(6) { transform: rotate(225deg); animation-delay: -0.25s; }
+  .flower-spinner .petal:nth-child(7) { transform: rotate(270deg); animation-delay: -0.125s; }
+  .flower-spinner .petal:nth-child(8) { transform: rotate(315deg); animation-delay: 0s; }
+
+  @keyframes petal-fade {
+    0%   { opacity: 1; }
+    100% { opacity: 0.15; }
+  }
+
+  /* Small inline spinner used inside buttons */
+  .btn-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: btn-spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  @keyframes btn-spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Full-screen overlay spinner (shown while switching accounts) */
+  #authLoader {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+  }
 </style>
 </head>
 <body>
 
+  <!-- ================= BOOT LOADER ================= -->
+  <div id="bootLoader">
+    <div class="flower-spinner">
+      <div class="petal"></div>
+      <div class="petal"></div>
+      <div class="petal"></div>
+      <div class="petal"></div>
+      <div class="petal"></div>
+      <div class="petal"></div>
+      <div class="petal"></div>
+      <div class="petal"></div>
+    </div>
+  </div>
+
+  <!-- ================= AUTH SWITCH LOADER (shown briefly when signing in) ================= -->
+  <div id="authLoader" class="hidden">
+    <div class="flower-spinner">
+      <div class="petal"></div>
+      <div class="petal"></div>
+      <div class="petal"></div>
+      <div class="petal"></div>
+      <div class="petal"></div>
+      <div class="petal"></div>
+      <div class="petal"></div>
+      <div class="petal"></div>
+    </div>
+  </div>
+
   <!-- ================= LOGIN SCREEN ================= -->
-  <div id="loginScreen">
+  <div id="loginScreen" class="hidden">
     <div class="login-card">
       <div class="logo">⚡</div>
       <h1>Digital Recharge</h1>
@@ -495,9 +629,11 @@
   // ---------------- State ----------------
   let currentUser = null;     // { name, email }
   let selectedCard = null;    // CONFIG.CARDS item
-  let wallet = [];            // [{ id, cardId, label, code, status, createdAt }]
+  let wallet = [];            // [{ id, cardId, label, amount, code, status, createdAt }]
 
   // ---------------- DOM refs ----------------
+  const bootLoader = document.getElementById("bootLoader");
+  const authLoader = document.getElementById("authLoader");
   const loginScreen = document.getElementById("loginScreen");
   const appScreen = document.getElementById("appScreen");
   const accountBtn = document.getElementById("accountBtn");
@@ -540,9 +676,19 @@
   }
 
   // ---------------- Wallet storage helpers ----------------
+  // IMPORTANT: wallet is namespaced per-account (by email) so switching
+  // Google accounts never shows another account's pending/sent items.
+  function getWalletStorageKey() {
+    const email = currentUser && currentUser.email ? currentUser.email : "guest";
+    return CONFIG.STORAGE_KEYS.WALLET + ":" + email;
+  }
+
   function loadWallet() {
+    // Always reset in-memory wallet first so a previous account's
+    // data can never leak into the newly logged-in account's view.
+    wallet = [];
     try {
-      const raw = localStorage.getItem(CONFIG.STORAGE_KEYS.WALLET);
+      const raw = localStorage.getItem(getWalletStorageKey());
       wallet = raw ? JSON.parse(raw) : [];
     } catch (e) {
       wallet = [];
@@ -550,7 +696,7 @@
   }
 
   function saveWallet() {
-    localStorage.setItem(CONFIG.STORAGE_KEYS.WALLET, JSON.stringify(wallet));
+    localStorage.setItem(getWalletStorageKey(), JSON.stringify(wallet));
   }
 
   function generateRandomCode() {
@@ -594,6 +740,7 @@
       id: "wi_" + Date.now(),
       cardId: selectedCard.id,
       label: selectedCard.label,
+      amount: selectedCard.amount,
       code: null,
       status: "pending", // pending -> sent
       createdAt: new Date().toISOString()
@@ -640,20 +787,31 @@
       const dateStr = new Date(item.createdAt).toLocaleString();
       const statusClass = item.status === "sent" ? "sent" : "pending";
       const statusLabel = item.status === "sent" ? "Sent" : "Pending";
+      const amountText = item.amount ? `${item.amount} LKR` : item.label;
 
       let codeHtml = "";
       let actionHtml = "";
 
       if (item.status === "sent" && item.code) {
         codeHtml = `<div class="wallet-item-code">${item.code}</div>`;
-        actionHtml = `<div class="hint" style="margin-top:0;">Code sent to owner via email & WhatsApp.</div>`;
+        actionHtml = `
+          <div class="hint" style="margin-top:0; margin-bottom:10px;">Code sent to owner via email & WhatsApp.</div>
+          <div class="wallet-row-actions">
+            <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
+          </div>
+        `;
       } else {
-        actionHtml = `<button class="wallet-generate-btn" data-id="${item.id}">Generate Code</button>`;
+        actionHtml = `
+          <div class="wallet-row-actions">
+            <button class="wallet-generate-btn" data-id="${item.id}" style="flex:1;">Generate Code</button>
+            <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
+          </div>
+        `;
       }
 
       el.innerHTML = `
         <div class="wallet-item-top">
-          <div class="wallet-item-amount">${item.label}</div>
+          <div class="wallet-item-amount">${amountText}</div>
           <div class="wallet-item-status ${statusClass}">${statusLabel}</div>
         </div>
         <div class="wallet-item-date">${dateStr}</div>
@@ -671,6 +829,29 @@
         generateCodeForWalletItem(itemId, btn);
       });
     });
+
+    // Wire up reset buttons: clears the code/status back to a fresh
+    // pending state with a new amount/code cycle (does not delete the item).
+    walletList.querySelectorAll(".wallet-reset-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const itemId = btn.getAttribute("data-id");
+        resetWalletItem(itemId);
+      });
+    });
+  }
+
+  function resetWalletItem(itemId) {
+    const item = wallet.find((w) => w.id === itemId);
+    if (!item) return;
+
+    const ok = confirm("Reset this " + (item.amount ? item.amount + " LKR" : item.label) + " request? The current code will be cleared and it will go back to pending.");
+    if (!ok) return;
+
+    item.code = null;
+    item.status = "pending";
+    item.createdAt = new Date().toISOString();
+    saveWallet();
+    renderWallet();
   }
 
   function generateCodeForWalletItem(itemId, btnEl) {
@@ -686,7 +867,7 @@
 
     if (btnEl) {
       btnEl.disabled = true;
-      btnEl.textContent = "Sending...";
+      btnEl.innerHTML = '<span class="btn-spinner"></span> Sending...';
     }
 
     const templateParams = {
@@ -745,18 +926,23 @@
     localStorage.removeItem(CONFIG.STORAGE_KEYS.TOKEN);
     localStorage.removeItem(CONFIG.STORAGE_KEYS.USER);
     currentUser = null;
+    wallet = [];
     accountDropdown.classList.add("hidden");
     showLoginScreen();
   });
 
   // ---------------- Screen switching ----------------
   function showLoginScreen() {
+    bootLoader.classList.add("hidden");
+    authLoader.classList.add("hidden");
     appScreen.classList.add("hidden");
     loginScreen.classList.remove("hidden");
     initGoogleSignIn();
   }
 
   function showAppScreen() {
+    bootLoader.classList.add("hidden");
+    authLoader.classList.add("hidden");
     loginScreen.classList.add("hidden");
     appScreen.classList.remove("hidden");
     dashboardView.classList.remove("hidden");
@@ -765,8 +951,11 @@
     userNameLabel.textContent = currentUser
       ? `${currentUser.name}\n${currentUser.email}`
       : "—";
+    // Always reload wallet fresh for the currently signed-in account,
+    // so a different user never sees a previous account's pending list.
     loadWallet();
     renderCardGrid();
+    renderWallet();
   }
 
   // ---------------- Google Sign-In ----------------
@@ -779,6 +968,11 @@
       return;
     }
 
+    // Show the flower-spinner immediately on the sign-in (single) page
+    // while we switch accounts and load that account's data.
+    loginScreen.classList.add("hidden");
+    authLoader.classList.remove("hidden");
+
     currentUser = {
       name: payload.name || payload.email || "User",
       email: payload.email || ""
@@ -787,7 +981,10 @@
     localStorage.setItem(CONFIG.STORAGE_KEYS.TOKEN, token);
     localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(currentUser));
 
-    showAppScreen();
+    // Small delay so the spinner is actually perceivable, then route in.
+    setTimeout(() => {
+      showAppScreen();
+    }, 500);
   }
 
   function initGoogleSignIn(attempt) {
@@ -824,17 +1021,20 @@
     const savedToken = localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN);
     const savedUser = localStorage.getItem(CONFIG.STORAGE_KEYS.USER);
 
-    if (savedToken && savedUser) {
-      try {
-        currentUser = JSON.parse(savedUser);
-        showAppScreen();
-        return;
-      } catch (e) {
-        // fall through to login
+    // Keep the flower-spinner visible briefly so the loading state
+    // is actually perceivable, then route to the right screen.
+    setTimeout(() => {
+      if (savedToken && savedUser) {
+        try {
+          currentUser = JSON.parse(savedUser);
+          showAppScreen();
+          return;
+        } catch (e) {
+          // fall through to login
+        }
       }
-    }
-
-    showLoginScreen();
+      showLoginScreen();
+    }, 600);
   }
 
   boot();
