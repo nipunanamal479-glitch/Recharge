@@ -8,7 +8,7 @@ const CONFIG = {
 
   EMAILJS_PUBLIC_KEY: "HahSYzYSEJF5oRsnt",
   EMAILJS_SERVICE_ID: "service_ky2ympa",
-  EMAILJS_TEMPLATE_ID: "template_5sac14q",
+  EMAILJS_TEMPLATE_ID: "template_brw3umg",
 
   WHATSAPP_NUMBER: "0772915479",
 
