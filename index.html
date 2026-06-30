@@ -10,32 +10,7 @@
 <!-- EmailJS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
-<script>
-  // ==============================
-  // Digital Recharge - Configuration & constants
-  // (inlined so the app works as a single self-contained file)
-  // ==============================
-  const CONFIG = {
-    GOOGLE_CLIENT_ID: "12019111383-058lqu79k9jvbdcq7brqql1ukt1028l8.apps.googleusercontent.com",
-
-    EMAILJS_PUBLIC_KEY: "HahSYzYSEJF5oRsnt",
-    EMAILJS_SERVICE_ID: "service_ky2ympa",
-    EMAILJS_TEMPLATE_ID: "template_5sac14q",
-
-    WHATSAPP_NUMBER: "0772915479",
-
-    CARDS: [
-      { id: "card_500", label: "500 LKR", amount: 500 },
-      { id: "card_1000", label: "1000 LKR", amount: 1000 },
-      { id: "card_2000", label: "2000 LKR", amount: 2000 }
-    ],
-
-    STORAGE_KEYS: {
-      TOKEN: "dr_auth_token",
-      USER: "dr_user_info"
-    }
-  };
-</script>
+<script src="data.js"></script>
 
 <style>
   :root {
@@ -109,33 +84,6 @@
     justify-content: center;
     min-height: 4px;
   }
-
-  #fallbackSignInBtn {
-    width: 100%;
-    background: #fff;
-    color: #1f1f1f;
-    border: 1px solid #dadce0;
-    padding: 11px 16px;
-    border-radius: 999px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 8px;
-  }
-  #fallbackSignInBtn:hover { background: #f7f7f7; }
-
-  .auth-debug {
-    margin-top: 18px;
-    font-size: 11px;
-    color: #64748b;
-    text-align: left;
-    background: rgba(0,0,0,0.25);
-    border-radius: 8px;
-    padding: 8px 10px;
-    word-break: break-all;
-    line-height: 1.5;
-  }
-  .auth-debug:empty { display: none; }
 
   /* ---------- App Shell ---------- */
   #appScreen {
@@ -343,6 +291,27 @@
     color: var(--text-dim);
   }
 
+  .generated-code-box {
+    margin-top: 18px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .generated-code-box .label {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+  }
+
+  .generated-code-box .value {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    color: #4ade80;
+  }
+
   @media (max-width: 380px) {
     .recharge-card .amount { font-size: 13px; }
     .selected-amount-display .value { font-size: 26px; }
@@ -358,8 +327,6 @@
       <h1>Digital Recharge</h1>
       <p>Sign in to continue to your dashboard</p>
       <div id="googleSignInBtn"></div>
-      <button id="fallbackSignInBtn" class="hidden">Sign in with Google</button>
-      <p id="authDebug" class="auth-debug"></p>
     </div>
   </div>
 
@@ -397,6 +364,11 @@
             </div>
             <button id="generateCodeBtn">Generate Code</button>
             <p class="hint">You'll be asked to enter the 6-digit payment code from your transaction.</p>
+
+            <div id="generatedCodeBox" class="generated-code-box hidden">
+              <div class="label">Your Payment Code</div>
+              <div class="value" id="generatedCodeValue">—</div>
+            </div>
           </div>
         </div>
 
@@ -426,6 +398,8 @@
   const selectedAmountLabel = document.getElementById("selectedAmountLabel");
   const generateCodeBtn = document.getElementById("generateCodeBtn");
   const backBtn = document.getElementById("backBtn");
+  const generatedCodeBox = document.getElementById("generatedCodeBox");
+  const generatedCodeValue = document.getElementById("generatedCodeValue");
 
   // ---------------- Init EmailJS ----------------
   if (window.emailjs) {
@@ -468,6 +442,8 @@
   function selectCard(card) {
     selectedCard = card;
     selectedAmountLabel.textContent = card.label;
+    generatedCodeBox.classList.add("hidden");
+    generatedCodeValue.textContent = "—";
     dashboardView.classList.add("hidden");
     selectedView.classList.remove("hidden");
   }
@@ -476,6 +452,8 @@
     selectedView.classList.add("hidden");
     dashboardView.classList.remove("hidden");
     selectedCard = null;
+    generatedCodeBox.classList.add("hidden");
+    generatedCodeValue.textContent = "—";
   });
 
   // ---------------- Generate Code flow ----------------
@@ -493,6 +471,10 @@
       alert("Invalid code. Please enter exactly 6 digits.");
       return;
     }
+
+    // Show the code on screen immediately
+    generatedCodeValue.textContent = trimmed;
+    generatedCodeBox.classList.remove("hidden");
 
     sendRequestEmail(trimmed);
   });
@@ -517,17 +499,31 @@
       .send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, templateParams)
       .then(() => {
         alert(
-          "Request sent successfully! Contact owner via WhatsApp: " +
-            CONFIG.WHATSAPP_NUMBER
+          "Thank you! Your " + selectedCard.label +
+            " recharge request was sent successfully. " +
+            "You'll now be redirected to WhatsApp to confirm with the owner."
         );
-        // Reset back to dashboard
+
+        // Build a WhatsApp deep link with a pre-filled message and open it.
+        // International format required: country code + number, no leading 0.
+        const waNumber = "94" + CONFIG.WHATSAPP_NUMBER.replace(/^0/, "");
+        const waMessage = encodeURIComponent(
+          "Hi, I just requested a " + selectedCard.label +
+            " recharge (code: " + paymentCode + "). Please confirm my payment."
+        );
+        window.open("https://wa.me/" + waNumber + "?text=" + waMessage, "_blank");
+
+        // Reset back to dashboard so another card can be selected
         selectedView.classList.add("hidden");
         dashboardView.classList.remove("hidden");
         selectedCard = null;
+        generatedCodeBox.classList.add("hidden");
+        generatedCodeValue.textContent = "—";
       })
       .catch((err) => {
         console.error("EmailJS send error:", err);
-        alert("Failed to send the request. Please check your connection and try again.");
+        const detail = (err && (err.text || err.message)) || "Unknown error";
+        alert("Failed to send the request: " + detail);
       })
       .finally(() => {
         generateCodeBtn.disabled = false;
@@ -596,16 +592,10 @@
 
   function initGoogleSignIn(attempt) {
     attempt = attempt || 0;
-    const debugEl = document.getElementById("authDebug");
-    const fallbackBtn = document.getElementById("fallbackSignInBtn");
 
     if (!window.google || !google.accounts || !google.accounts.id) {
       if (attempt > 20) {
-        // Google library failed to load after ~6s — likely blocked by network/ad-blocker
-        if (debugEl) {
-          debugEl.textContent =
-            "Google Sign-In script failed to load. Check your internet connection or disable any ad-blocker, then reload.";
-        }
+        console.error("Google Sign-In script failed to load.");
         return;
       }
       setTimeout(() => initGoogleSignIn(attempt + 1), 300);
@@ -627,49 +617,6 @@
       text: "signin_with",
       width: 280
     });
-
-    // Show diagnostic info: current origin must be whitelisted in
-    // Google Cloud Console -> Credentials -> OAuth Client -> Authorized JavaScript origins
-    if (debugEl) {
-      debugEl.textContent =
-        "Current origin: " + window.location.origin +
-        "\nIf the button above is blank, add this exact origin to " +
-        "Authorized JavaScript origins for your Google OAuth Client.";
-    }
-
-    // Always show a manual fallback button too, in case the
-    // official rendered button fails silently (common with
-    // unauthorized origins or in-app browsers/WebViews).
-    if (fallbackBtn) {
-      fallbackBtn.classList.remove("hidden");
-      fallbackBtn.onclick = function () {
-        try {
-          google.accounts.id.prompt((notification) => {
-            if (
-              notification.isNotDisplayed() ||
-              notification.isSkippedMoment()
-            ) {
-              if (debugEl) {
-                debugEl.textContent =
-                  "Google declined to show the sign-in prompt here (reason: " +
-                  (notification.getNotDisplayedReason() ||
-                    notification.getSkippedReason() ||
-                    "unknown") +
-                  "). This usually means the current origin (" +
-                  window.location.origin +
-                  ") is not authorized for this Client ID, or you're inside " +
-                  "an in-app browser/WebView that Google blocks. Open this page " +
-                  "in Chrome/Safari directly, or whitelist the origin in Google Cloud Console.";
-              }
-            }
-          });
-        } catch (err) {
-          if (debugEl) {
-            debugEl.textContent = "Error triggering sign-in: " + err.message;
-          }
-        }
-      };
-    }
   }
 
   // ---------------- Boot ----------------
