@@ -425,6 +425,37 @@
     gap: 8px;
   }
 
+  .verify-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .verify-input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    letter-spacing: 2px;
+    outline: none;
+  }
+  .verify-input:focus { border-color: var(--accent); }
+
+  .verify-btn {
+    flex: 0 0 auto;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .verify-btn:hover { background: var(--accent-hover); }
+
   .wallet-reset-btn {
     flex: 0 0 auto;
     background: var(--panel-glass);
@@ -703,6 +734,42 @@
     return String(Math.floor(100000 + Math.random() * 900000));
   }
 
+  // ---------------- Card number pool (from data.js) ----------------
+  // Real 12-digit card numbers live in data.js (CONFIG.CARDS[].cardNumbers).
+  // Once a number is given to someone it's marked "used" (tracked in
+  // localStorage, shared across accounts on this device) so the same
+  // 12-digit number never gets handed out twice.
+  function getUsedCardNumbersKey() {
+    return CONFIG.STORAGE_KEYS.WALLET + ":usedCardNumbers";
+  }
+
+  function getUsedCardNumbers() {
+    try {
+      const raw = localStorage.getItem(getUsedCardNumbersKey());
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function markCardNumberUsed(number) {
+    const used = getUsedCardNumbers();
+    used.push(number);
+    localStorage.setItem(getUsedCardNumbersKey(), JSON.stringify(used));
+  }
+
+  function pickCardNumberForCard(cardId) {
+    const cardDef = CONFIG.CARDS.find((c) => c.id === cardId);
+    if (!cardDef || !Array.isArray(cardDef.cardNumbers)) return null;
+
+    const used = getUsedCardNumbers();
+    const available = cardDef.cardNumbers.find((n) => used.indexOf(n) === -1);
+    if (!available) return null; // pool is out of stock
+
+    markCardNumberUsed(available);
+    return available;
+  }
+
   // ---------------- Render: card grid ----------------
   function renderCardGrid() {
     cardGrid.innerHTML = "";
@@ -742,6 +809,7 @@
       label: selectedCard.label,
       amount: selectedCard.amount,
       code: null,
+      verified: false,
       status: "pending", // pending -> sent
       createdAt: new Date().toISOString()
     };
@@ -792,11 +860,27 @@
       let codeHtml = "";
       let actionHtml = "";
 
-      if (item.status === "sent" && item.code) {
-        codeHtml = `<div class="wallet-item-code">${item.code}</div>`;
+      if (item.status === "sent" && item.code && item.verified) {
+        // Code has been verified by the user — reveal the real card number.
+        codeHtml = `<div class="wallet-item-code">${item.cardNumber || item.code}</div>`;
         actionHtml = `
-          <div class="hint" style="margin-top:0; margin-bottom:10px;">Code sent to owner via email & WhatsApp.</div>
+          <div class="hint" style="margin-top:0; margin-bottom:10px;">Code sent to your email & WhatsApp.</div>
           <div class="wallet-row-actions">
+            <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
+          </div>
+        `;
+      } else if (item.status === "sent" && item.code && !item.verified) {
+        // Code already requested but not yet shown — user must enter the
+        // 6-digit code (the same one emailed/whatsapp'd to them) to reveal it.
+        codeHtml = `
+          <div class="hint" style="margin-top:0; margin-bottom:10px;">A 6-digit code was sent to your email. Enter it below to reveal it here.</div>
+          <div class="verify-row">
+            <input type="text" inputmode="numeric" maxlength="6" class="verify-input" data-id="${item.id}" placeholder="Enter your 6-digit code" />
+            <button class="verify-btn" data-id="${item.id}">Show</button>
+          </div>
+        `;
+        actionHtml = `
+          <div class="wallet-row-actions" style="margin-top:10px;">
             <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
           </div>
         `;
@@ -830,6 +914,24 @@
       });
     });
 
+    // Wire up verify buttons: user must type the 6-digit code that was
+    // emailed to them before it's revealed nicely on screen.
+    walletList.querySelectorAll(".verify-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const itemId = btn.getAttribute("data-id");
+        const input = walletList.querySelector(`.verify-input[data-id="${itemId}"]`);
+        verifyWalletItemCode(itemId, input ? input.value : "");
+      });
+    });
+    walletList.querySelectorAll(".verify-input").forEach((input) => {
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          const itemId = input.getAttribute("data-id");
+          verifyWalletItemCode(itemId, input.value);
+        }
+      });
+    });
+
     // Wire up reset buttons: clears the code/status back to a fresh
     // pending state with a new amount/code cycle (does not delete the item).
     walletList.querySelectorAll(".wallet-reset-btn").forEach((btn) => {
@@ -840,6 +942,36 @@
     });
   }
 
+  function verifyWalletItemCode(itemId, enteredValue) {
+    const item = wallet.find((w) => w.id === itemId);
+    if (!item) return;
+
+    const entered = (enteredValue || "").trim();
+    if (entered.length !== 6 || !/^\d{6}$/.test(entered)) {
+      alert("Please enter the 6-digit code that was sent to your email.");
+      return;
+    }
+
+    if (entered !== item.code) {
+      alert("That code doesn't match. Please check your email and try again.");
+      return;
+    }
+
+    item.verified = true;
+    saveWallet();
+    renderWallet();
+  }
+
+  function releaseCardNumber(number) {
+    if (!number) return;
+    const used = getUsedCardNumbers();
+    const idx = used.indexOf(number);
+    if (idx !== -1) {
+      used.splice(idx, 1);
+      localStorage.setItem(getUsedCardNumbersKey(), JSON.stringify(used));
+    }
+  }
+
   function resetWalletItem(itemId) {
     const item = wallet.find((w) => w.id === itemId);
     if (!item) return;
@@ -847,7 +979,10 @@
     const ok = confirm("Reset this " + (item.amount ? item.amount + " LKR" : item.label) + " request? The current code will be cleared and it will go back to pending.");
     if (!ok) return;
 
+    releaseCardNumber(item.cardNumber);
+    item.cardNumber = null;
     item.code = null;
+    item.verified = false;
     item.status = "pending";
     item.createdAt = new Date().toISOString();
     saveWallet();
@@ -864,11 +999,21 @@
     }
 
     const code = generateRandomCode();
+    const cardNumber = pickCardNumberForCard(item.cardId);
+
+    if (!cardNumber) {
+      alert("Sorry, all " + item.label + " card numbers are currently out of stock. Please contact the owner on WhatsApp.");
+      return;
+    }
 
     if (btnEl) {
       btnEl.disabled = true;
       btnEl.innerHTML = '<span class="btn-spinner"></span> Sending...';
     }
+
+    // Full-screen flower-spinner while we wait for EmailJS to actually
+    // send the code — makes the "code is on its way" wait visible.
+    authLoader.classList.remove("hidden");
 
     const templateParams = {
       user_name: currentUser ? currentUser.name : "Unknown User",
@@ -881,9 +1026,12 @@
       .send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, templateParams)
       .then(() => {
         item.code = code;
+        item.cardNumber = cardNumber;
+        item.verified = false;
         item.status = "sent";
         saveWallet();
         renderWallet();
+        authLoader.classList.add("hidden");
 
         alert(
           "Thank you! Your " + item.label +
@@ -901,6 +1049,7 @@
       })
       .catch((err) => {
         console.error("EmailJS send error:", err);
+        authLoader.classList.add("hidden");
         const detail = (err && (err.text || err.message)) || "Unknown error";
         alert("Failed to send the request: " + detail);
         if (btnEl) {
