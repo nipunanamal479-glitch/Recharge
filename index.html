@@ -7,24 +7,46 @@
         .header { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; }
         .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .card-btn { background: #334155; border: 1px solid #475569; color: white; padding: 15px; border-radius: 8px; cursor: pointer; }
-        /* Account menu එකේ පෙනුම */
         #acc-menu { position: absolute; right: 20px; top: 50px; background: #334155; padding: 10px; border-radius: 8px; display: none; }
+        .btn-login { background: #6366f1; padding: 12px; border-radius: 8px; border: none; color: white; width: 100%; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div id="dash-view" class="glass">
-        <div class="header">
-            <span>Digital Recharge</span>
-            <span onclick="toggleMenu()" style="cursor:pointer;">Account</span>
+    <div id="app" class="glass">
+        <!-- Login View -->
+        <div id="login-view">
+            <h1>Welcome</h1>
+            <button class="btn-login" onclick="login()">Sign in with Google</button>
         </div>
-        <div id="acc-menu"><span onclick="logout()" style="color:#f87171; cursor:pointer;">Logout</span></div>
-        <div id="card-list" class="card-grid"></div>
+
+        <!-- Dashboard View -->
+        <div id="dash-view" style="display:none;">
+            <div class="header">
+                <span>Digital Recharge</span>
+                <span onclick="toggleMenu()" style="cursor:pointer;">Account</span>
+            </div>
+            <div id="acc-menu"><span onclick="logout()" style="color:#f87171; cursor:pointer;">Logout</span></div>
+            <div id="card-list" class="card-grid"></div>
+        </div>
     </div>
+
     <script src="data.js"></script>
     <script>
+        function login() { window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=12019111383-058lqu79k9jvbdcq7brqql1ukt1028l8.apps.googleusercontent.com&redirect_uri=${window.location.origin}${window.location.pathname}&response_type=token&scope=email profile&prompt=consent`; }
         function toggleMenu() { document.getElementById('acc-menu').style.display = (document.getElementById('acc-menu').style.display === 'block') ? 'none' : 'block'; }
         function logout() { localStorage.removeItem('user_token'); location.reload(); }
-        renderCards();
+
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.hash.substring(1));
+            const token = params.get('access_token');
+            if (token) localStorage.setItem('user_token', token);
+            
+            if (localStorage.getItem('user_token')) {
+                document.getElementById('login-view').style.display = 'none';
+                document.getElementById('dash-view').style.display = 'block';
+                renderCards();
+            }
+        };
     </script>
 </body>
 </html>
