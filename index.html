@@ -864,7 +864,7 @@
         // Code has been verified by the user — reveal the real card number.
         codeHtml = `<div class="wallet-item-code">${item.cardNumber || item.code}</div>`;
         actionHtml = `
-          <div class="hint" style="margin-top:0; margin-bottom:10px;">Code sent to your email & WhatsApp.</div>
+          <div class="hint" style="margin-top:0; margin-bottom:10px;">Code was sent to your email only.</div>
           <div class="wallet-row-actions">
             <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
           </div>
@@ -876,7 +876,7 @@
           <div class="hint" style="margin-top:0; margin-bottom:10px;">A 6-digit code was sent to your email. Enter it below to reveal it here.</div>
           <div class="verify-row">
             <input type="text" inputmode="numeric" maxlength="6" class="verify-input" data-id="${item.id}" placeholder="Enter your 6-digit code" />
-            <button class="verify-btn" data-id="${item.id}">Show</button>
+            <button class="verify-btn" data-id="${item.id}">Get your recharge card</button>
           </div>
         `;
         actionHtml = `
@@ -1034,16 +1034,19 @@
         authLoader.classList.add("hidden");
 
         alert(
-          "Thank you! Your " + item.label +
-            " payment code was generated and sent. " +
-            "You'll now be redirected to WhatsApp to confirm with the owner."
+          "Thank you! A 6-digit code was sent to your email only. " +
+            "Enter it in the wallet to get your recharge card. " +
+            "You'll now be redirected to WhatsApp to contact the owner about your payment."
         );
 
         // Build a WhatsApp deep link with a pre-filled message and open it.
+        // NOTE: the 6-digit code is never included here — it's only ever
+        // sent to the user's email. WhatsApp is just to contact the owner
+        // about completing the payment.
         const waNumber = "94" + CONFIG.WHATSAPP_NUMBER.replace(/^0/, "");
         const waMessage = encodeURIComponent(
           "Hi, I just requested a " + item.label +
-            " recharge (code: " + code + "). Please confirm my payment."
+            " recharge. Please confirm my payment so I can receive my card."
         );
         window.open("https://wa.me/" + waNumber + "?text=" + waMessage, "_blank");
       })
