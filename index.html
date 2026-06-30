@@ -1,52 +1,697 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <style>
-        body { margin: 0; background: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .glass { background: #1e293b; padding: 20px; border-radius: 15px; width: 350px; border: 1px solid #334155; position: relative; }
-        .header { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; }
-        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .card-btn { background: #334155; border: 1px solid #475569; color: white; padding: 15px; border-radius: 8px; cursor: pointer; }
-        #acc-menu { position: absolute; right: 20px; top: 50px; background: #334155; padding: 10px; border-radius: 8px; display: none; }
-        .btn-login { background: #6366f1; padding: 12px; border-radius: 8px; border: none; color: white; width: 100%; cursor: pointer; }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Digital Recharge</title>
+
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+<script>
+  // ==============================
+  // Digital Recharge - Configuration & constants
+  // (inlined so the app works as a single self-contained file)
+  // ==============================
+  const CONFIG = {
+    GOOGLE_CLIENT_ID: "12019111383-058lqu79k9jvbdcq7brqql1ukt1028l8.apps.googleusercontent.com",
+
+    EMAILJS_PUBLIC_KEY: "HahSYzYSEJF5oRsnt",
+    EMAILJS_SERVICE_ID: "service_ky2ympa",
+    EMAILJS_TEMPLATE_ID: "template_5sac14q",
+
+    WHATSAPP_NUMBER: "0772915479",
+
+    CARDS: [
+      { id: "card_500", label: "500 LKR", amount: 500 },
+      { id: "card_1000", label: "1000 LKR", amount: 1000 },
+      { id: "card_2000", label: "2000 LKR", amount: 2000 }
+    ],
+
+    STORAGE_KEYS: {
+      TOKEN: "dr_auth_token",
+      USER: "dr_user_info"
+    }
+  };
+</script>
+
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-glass: rgba(30, 41, 59, 0.7);
+    --border: rgba(148, 163, 184, 0.15);
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --danger: #ef4444;
+    --danger-hover: #dc2626;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(59,130,246,0.15), transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(99,102,241,0.12), transparent 40%);
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text);
+  }
+
+  .hidden { display: none !important; }
+
+  /* ---------- Login Screen ---------- */
+  #loginScreen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .login-card {
+    background: var(--panel-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 28px;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .login-card .logo {
+    font-size: 40px;
+    margin-bottom: 8px;
+  }
+
+  .login-card h1 {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .login-card p {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+
+  #googleSignInBtn {
+    display: flex;
+    justify-content: center;
+    min-height: 4px;
+  }
+
+  #fallbackSignInBtn {
+    width: 100%;
+    background: #fff;
+    color: #1f1f1f;
+    border: 1px solid #dadce0;
+    padding: 11px 16px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  #fallbackSignInBtn:hover { background: #f7f7f7; }
+
+  .auth-debug {
+    margin-top: 18px;
+    font-size: 11px;
+    color: #64748b;
+    text-align: left;
+    background: rgba(0,0,0,0.25);
+    border-radius: 8px;
+    padding: 8px 10px;
+    word-break: break-all;
+    line-height: 1.5;
+  }
+  .auth-debug:empty { display: none; }
+
+  /* ---------- App Shell ---------- */
+  #appScreen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: var(--panel-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+
+  .account-wrap {
+    position: relative;
+  }
+
+  #accountBtn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  #accountBtn:hover { background: #273449; }
+
+  #accountDropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 8px);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    min-width: 180px;
+    padding: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 60;
+  }
+
+  #accountDropdown .user-name {
+    font-size: 13px;
+    color: var(--text-dim);
+    padding: 4px 8px 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+    word-break: break-word;
+  }
+
+  #logoutBtn {
+    width: 100%;
+    background: var(--danger);
+    color: #fff;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  #logoutBtn:hover { background: var(--danger-hover); }
+
+  main {
+    flex: 1;
+    padding: 24px 16px 60px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .panel {
+    background: var(--panel-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+  }
+
+  .panel h3 {
+    font-size: 16px;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  /* ---------- Card Grid ---------- */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+
+  .recharge-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  }
+
+  .recharge-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    background: #243348;
+  }
+
+  .recharge-card .icon {
+    font-size: 26px;
+    margin-bottom: 8px;
+  }
+
+  .recharge-card .amount {
+    font-size: 15px;
+    font-weight: 700;
+  }
+
+  /* ---------- Selected Card Screen ---------- */
+  #selectedView .panel {
+    text-align: center;
+  }
+
+  .back-btn {
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .back-btn:hover { color: var(--text); }
+
+  .selected-amount-display {
+    background: linear-gradient(135deg, var(--accent), #6366f1);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 24px;
+  }
+
+  .selected-amount-display .label {
+    font-size: 13px;
+    opacity: 0.85;
+    margin-bottom: 6px;
+  }
+
+  .selected-amount-display .value {
+    font-size: 32px;
+    font-weight: 800;
+  }
+
+  #generateCodeBtn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  #generateCodeBtn:hover { background: var(--accent-hover); }
+  #generateCodeBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .hint {
+    margin-top: 14px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+  }
+
+  @media (max-width: 380px) {
+    .recharge-card .amount { font-size: 13px; }
+    .selected-amount-display .value { font-size: 26px; }
+  }
+</style>
 </head>
 <body>
-    <div id="app" class="glass">
-        <!-- Login View -->
-        <div id="login-view">
-            <h1>Welcome</h1>
-            <button class="btn-login" onclick="login()">Sign in with Google</button>
-        </div>
 
-        <!-- Dashboard View -->
-        <div id="dash-view" style="display:none;">
-            <div class="header">
-                <span>Digital Recharge</span>
-                <span onclick="toggleMenu()" style="cursor:pointer;">Account</span>
-            </div>
-            <div id="acc-menu"><span onclick="logout()" style="color:#f87171; cursor:pointer;">Logout</span></div>
-            <div id="card-list" class="card-grid"></div>
-        </div>
+  <!-- ================= LOGIN SCREEN ================= -->
+  <div id="loginScreen">
+    <div class="login-card">
+      <div class="logo">⚡</div>
+      <h1>Digital Recharge</h1>
+      <p>Sign in to continue to your dashboard</p>
+      <div id="googleSignInBtn"></div>
+      <button id="fallbackSignInBtn" class="hidden">Sign in with Google</button>
+      <p id="authDebug" class="auth-debug"></p>
     </div>
+  </div>
 
-    <script src="data.js"></script>
-    <script>
-        function login() { window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=12019111383-058lqu79k9jvbdcq7brqql1ukt1028l8.apps.googleusercontent.com&redirect_uri=${window.location.origin}${window.location.pathname}&response_type=token&scope=email profile&prompt=consent`; }
-        function toggleMenu() { document.getElementById('acc-menu').style.display = (document.getElementById('acc-menu').style.display === 'block') ? 'none' : 'block'; }
-        function logout() { localStorage.removeItem('user_token'); location.reload(); }
+  <!-- ================= APP SCREEN ================= -->
+  <div id="appScreen" class="hidden">
+    <header>
+      <h2>Digital Recharge</h2>
+      <div class="account-wrap">
+        <button id="accountBtn">👤 Account ▾</button>
+        <div id="accountDropdown" class="hidden">
+          <div class="user-name" id="userNameLabel">—</div>
+          <button id="logoutBtn">Logout</button>
+        </div>
+      </div>
+    </header>
 
-        window.onload = () => {
-            const params = new URLSearchParams(window.location.hash.substring(1));
-            const token = params.get('access_token');
-            if (token) localStorage.setItem('user_token', token);
-            
-            if (localStorage.getItem('user_token')) {
-                document.getElementById('login-view').style.display = 'none';
-                document.getElementById('dash-view').style.display = 'block';
-                renderCards();
+    <main>
+      <div class="container">
+
+        <!-- ---- Dashboard view: card grid ---- -->
+        <div id="dashboardView">
+          <div class="panel">
+            <h3>Select a recharge amount</h3>
+            <div class="card-grid" id="cardGrid"></div>
+          </div>
+        </div>
+
+        <!-- ---- Selected card view ---- -->
+        <div id="selectedView" class="hidden">
+          <button class="back-btn" id="backBtn">← Back</button>
+          <div class="panel">
+            <div class="selected-amount-display">
+              <div class="label">Selected Card</div>
+              <div class="value" id="selectedAmountLabel">—</div>
+            </div>
+            <button id="generateCodeBtn">Generate Code</button>
+            <p class="hint">You'll be asked to enter the 6-digit payment code from your transaction.</p>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---------------- State ----------------
+  let currentUser = null;     // { name, email }
+  let selectedCard = null;    // CONFIG.CARDS item
+
+  // ---------------- DOM refs ----------------
+  const loginScreen = document.getElementById("loginScreen");
+  const appScreen = document.getElementById("appScreen");
+  const accountBtn = document.getElementById("accountBtn");
+  const accountDropdown = document.getElementById("accountDropdown");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const userNameLabel = document.getElementById("userNameLabel");
+
+  const dashboardView = document.getElementById("dashboardView");
+  const selectedView = document.getElementById("selectedView");
+  const cardGrid = document.getElementById("cardGrid");
+  const selectedAmountLabel = document.getElementById("selectedAmountLabel");
+  const generateCodeBtn = document.getElementById("generateCodeBtn");
+  const backBtn = document.getElementById("backBtn");
+
+  // ---------------- Init EmailJS ----------------
+  if (window.emailjs) {
+    emailjs.init({ publicKey: CONFIG.EMAILJS_PUBLIC_KEY });
+  }
+
+  // ---------------- Utility: JWT decode ----------------
+  function decodeJwt(token) {
+    try {
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      );
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.error("Failed to decode JWT:", e);
+      return null;
+    }
+  }
+
+  // ---------------- Render: card grid ----------------
+  function renderCardGrid() {
+    cardGrid.innerHTML = "";
+    CONFIG.CARDS.forEach((card) => {
+      const btn = document.createElement("div");
+      btn.className = "recharge-card";
+      btn.innerHTML = `
+        <div class="icon">💳</div>
+        <div class="amount">${card.label}</div>
+      `;
+      btn.addEventListener("click", () => selectCard(card));
+      cardGrid.appendChild(btn);
+    });
+  }
+
+  function selectCard(card) {
+    selectedCard = card;
+    selectedAmountLabel.textContent = card.label;
+    dashboardView.classList.add("hidden");
+    selectedView.classList.remove("hidden");
+  }
+
+  backBtn.addEventListener("click", () => {
+    selectedView.classList.add("hidden");
+    dashboardView.classList.remove("hidden");
+    selectedCard = null;
+  });
+
+  // ---------------- Generate Code flow ----------------
+  generateCodeBtn.addEventListener("click", () => {
+    if (!selectedCard) return;
+
+    const code = window.prompt("Enter the 6-digit payment code:");
+
+    if (code === null) return; // user cancelled
+
+    const trimmed = code.trim();
+    const isValid = /^\d{6}$/.test(trimmed);
+
+    if (!isValid) {
+      alert("Invalid code. Please enter exactly 6 digits.");
+      return;
+    }
+
+    sendRequestEmail(trimmed);
+  });
+
+  function sendRequestEmail(paymentCode) {
+    if (!window.emailjs) {
+      alert("Email service is not available right now. Please try again later.");
+      return;
+    }
+
+    generateCodeBtn.disabled = true;
+    generateCodeBtn.textContent = "Sending...";
+
+    const templateParams = {
+      user_name: currentUser ? currentUser.name : "Unknown User",
+      user_email: currentUser ? currentUser.email : "Unknown",
+      selected_card: selectedCard.label,
+      payment_code: paymentCode
+    };
+
+    emailjs
+      .send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, templateParams)
+      .then(() => {
+        alert(
+          "Request sent successfully! Contact owner via WhatsApp: " +
+            CONFIG.WHATSAPP_NUMBER
+        );
+        // Reset back to dashboard
+        selectedView.classList.add("hidden");
+        dashboardView.classList.remove("hidden");
+        selectedCard = null;
+      })
+      .catch((err) => {
+        console.error("EmailJS send error:", err);
+        alert("Failed to send the request. Please check your connection and try again.");
+      })
+      .finally(() => {
+        generateCodeBtn.disabled = false;
+        generateCodeBtn.textContent = "Generate Code";
+      });
+  }
+
+  // ---------------- Account dropdown ----------------
+  accountBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    accountDropdown.classList.toggle("hidden");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!accountDropdown.contains(e.target) && e.target !== accountBtn) {
+      accountDropdown.classList.add("hidden");
+    }
+  });
+
+  logoutBtn.addEventListener("click", () => {
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.TOKEN);
+    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER);
+    currentUser = null;
+    accountDropdown.classList.add("hidden");
+    showLoginScreen();
+  });
+
+  // ---------------- Screen switching ----------------
+  function showLoginScreen() {
+    appScreen.classList.add("hidden");
+    loginScreen.classList.remove("hidden");
+    initGoogleSignIn();
+  }
+
+  function showAppScreen() {
+    loginScreen.classList.add("hidden");
+    appScreen.classList.remove("hidden");
+    dashboardView.classList.remove("hidden");
+    selectedView.classList.add("hidden");
+    userNameLabel.textContent = currentUser
+      ? `${currentUser.name}\n${currentUser.email}`
+      : "—";
+    renderCardGrid();
+  }
+
+  // ---------------- Google Sign-In ----------------
+  function handleCredentialResponse(response) {
+    const token = response.credential;
+    const payload = decodeJwt(token);
+
+    if (!payload) {
+      alert("Sign-in failed. Please try again.");
+      return;
+    }
+
+    currentUser = {
+      name: payload.name || payload.email || "User",
+      email: payload.email || ""
+    };
+
+    localStorage.setItem(CONFIG.STORAGE_KEYS.TOKEN, token);
+    localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(currentUser));
+
+    showAppScreen();
+  }
+
+  function initGoogleSignIn(attempt) {
+    attempt = attempt || 0;
+    const debugEl = document.getElementById("authDebug");
+    const fallbackBtn = document.getElementById("fallbackSignInBtn");
+
+    if (!window.google || !google.accounts || !google.accounts.id) {
+      if (attempt > 20) {
+        // Google library failed to load after ~6s — likely blocked by network/ad-blocker
+        if (debugEl) {
+          debugEl.textContent =
+            "Google Sign-In script failed to load. Check your internet connection or disable any ad-blocker, then reload.";
+        }
+        return;
+      }
+      setTimeout(() => initGoogleSignIn(attempt + 1), 300);
+      return;
+    }
+
+    google.accounts.id.initialize({
+      client_id: CONFIG.GOOGLE_CLIENT_ID,
+      callback: handleCredentialResponse,
+      auto_select: false
+    });
+
+    const btnContainer = document.getElementById("googleSignInBtn");
+    btnContainer.innerHTML = "";
+    google.accounts.id.renderButton(btnContainer, {
+      theme: "filled_blue",
+      size: "large",
+      shape: "pill",
+      text: "signin_with",
+      width: 280
+    });
+
+    // Show diagnostic info: current origin must be whitelisted in
+    // Google Cloud Console -> Credentials -> OAuth Client -> Authorized JavaScript origins
+    if (debugEl) {
+      debugEl.textContent =
+        "Current origin: " + window.location.origin +
+        "\nIf the button above is blank, add this exact origin to " +
+        "Authorized JavaScript origins for your Google OAuth Client.";
+    }
+
+    // Always show a manual fallback button too, in case the
+    // official rendered button fails silently (common with
+    // unauthorized origins or in-app browsers/WebViews).
+    if (fallbackBtn) {
+      fallbackBtn.classList.remove("hidden");
+      fallbackBtn.onclick = function () {
+        try {
+          google.accounts.id.prompt((notification) => {
+            if (
+              notification.isNotDisplayed() ||
+              notification.isSkippedMoment()
+            ) {
+              if (debugEl) {
+                debugEl.textContent =
+                  "Google declined to show the sign-in prompt here (reason: " +
+                  (notification.getNotDisplayedReason() ||
+                    notification.getSkippedReason() ||
+                    "unknown") +
+                  "). This usually means the current origin (" +
+                  window.location.origin +
+                  ") is not authorized for this Client ID, or you're inside " +
+                  "an in-app browser/WebView that Google blocks. Open this page " +
+                  "in Chrome/Safari directly, or whitelist the origin in Google Cloud Console.";
+              }
             }
-        };
-    </script>
+          });
+        } catch (err) {
+          if (debugEl) {
+            debugEl.textContent = "Error triggering sign-in: " + err.message;
+          }
+        }
+      };
+    }
+  }
+
+  // ---------------- Boot ----------------
+  function boot() {
+    const savedToken = localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN);
+    const savedUser = localStorage.getItem(CONFIG.STORAGE_KEYS.USER);
+
+    if (savedToken && savedUser) {
+      try {
+        currentUser = JSON.parse(savedUser);
+        showAppScreen();
+        return;
+      } catch (e) {
+        // fall through to login
+      }
+    }
+
+    showLoginScreen();
+  }
+
+  boot();
+})();
+</script>
 </body>
 </html>
