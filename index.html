@@ -469,6 +469,19 @@
   }
   .wallet-reset-btn:hover { color: var(--text); border-color: var(--danger); }
 
+  .wallet-delete-btn {
+    flex: 0 0 auto;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: var(--danger);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .wallet-delete-btn:hover { background: var(--danger); color: #fff; }
+
   .btn-spinner {
     width: 14px;
     height: 14px;
@@ -867,6 +880,7 @@
           <div class="hint" style="margin-top:0; margin-bottom:10px;">Code was sent to your email only.</div>
           <div class="wallet-row-actions">
             <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
+            <button class="wallet-delete-btn" data-id="${item.id}">🗑 Delete</button>
           </div>
         `;
       } else if (item.status === "sent" && item.code && !item.verified) {
@@ -882,6 +896,7 @@
         actionHtml = `
           <div class="wallet-row-actions" style="margin-top:10px;">
             <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
+            <button class="wallet-delete-btn" data-id="${item.id}">🗑 Delete</button>
           </div>
         `;
       } else {
@@ -889,6 +904,7 @@
           <div class="wallet-row-actions">
             <button class="wallet-generate-btn" data-id="${item.id}" style="flex:1;">Generate Code</button>
             <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
+            <button class="wallet-delete-btn" data-id="${item.id}">🗑 Delete</button>
           </div>
         `;
       }
@@ -940,6 +956,30 @@
         resetWalletItem(itemId);
       });
     });
+
+    // Wire up delete buttons: removes the item from the wallet entirely.
+    walletList.querySelectorAll(".wallet-delete-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const itemId = btn.getAttribute("data-id");
+        deleteWalletItem(itemId);
+      });
+    });
+  }
+
+  function deleteWalletItem(itemId) {
+    const item = wallet.find((w) => w.id === itemId);
+    if (!item) return;
+
+    const ok = confirm("Delete this " + (item.amount ? item.amount + " LKR" : item.label) + " request from your wallet? This cannot be undone.");
+    if (!ok) return;
+
+    // If a real card number had already been allocated, release it back
+    // to the stock pool so it isn't wasted.
+    releaseCardNumber(item.cardNumber);
+
+    wallet = wallet.filter((w) => w.id !== itemId);
+    saveWallet();
+    renderWallet();
   }
 
   function verifyWalletItemCode(itemId, enteredValue) {
