@@ -895,9 +895,112 @@
     justify-content: center;
     z-index: 999;
   }
+
+  /* ---------- Custom modal (replaces native alert()) ---------- */
+  #appModalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(8, 12, 22, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  #appModalOverlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .app-modal {
+    width: 100%;
+    max-width: 340px;
+    background: var(--panel-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 24px 22px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    transform: translateY(10px) scale(0.96);
+    opacity: 0;
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
+  }
+  #appModalOverlay.show .app-modal {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+  .app-modal-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+  .app-modal-icon.success { background: rgba(74, 222, 128, 0.14); }
+  .app-modal-icon.error { background: rgba(239, 68, 68, 0.14); }
+  .app-modal-icon.info { background: rgba(59, 130, 246, 0.14); }
+
+  .app-modal-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+
+  .app-modal-message {
+    font-size: 13.5px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 22px;
+  }
+
+  .app-modal-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  .app-modal-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .app-modal-btn:active { transform: translateY(0); }
+  .app-modal-btn.danger { background: var(--danger); }
+  .app-modal-btn.danger:hover { background: var(--danger-hover); }
+  .app-modal-btn.secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+  .app-modal-btn.secondary:hover { color: var(--text); border-color: var(--accent); }
 </style>
 </head>
 <body>
+
+  <!-- ================= CUSTOM MODAL (replaces alert/confirm) ================= -->
+  <div id="appModalOverlay">
+    <div class="app-modal">
+      <div class="app-modal-icon" id="appModalIcon">✓</div>
+      <div class="app-modal-title" id="appModalTitle">Title</div>
+      <div class="app-modal-message" id="appModalMessage">Message</div>
+      <button type="button" class="app-modal-btn" id="appModalPrimaryBtn">OK</button>
+      <button type="button" class="app-modal-btn secondary hidden" id="appModalSecondaryBtn">Cancel</button>
+    </div>
+  </div>
 
   <!-- ================= BOOT LOADER ================= -->
   <div id="bootLoader">
@@ -1090,6 +1193,12 @@
 
     // ---------------- DOM refs ----------------
     const bootLoader = document.getElementById("bootLoader");
+    const appModalOverlay = document.getElementById("appModalOverlay");
+    const appModalIcon = document.getElementById("appModalIcon");
+    const appModalTitle = document.getElementById("appModalTitle");
+    const appModalMessage = document.getElementById("appModalMessage");
+    const appModalPrimaryBtn = document.getElementById("appModalPrimaryBtn");
+    const appModalSecondaryBtn = document.getElementById("appModalSecondaryBtn");
     const authLoader = document.getElementById("authLoader");
     const loginScreen = document.getElementById("loginScreen");
     const appScreen = document.getElementById("appScreen");
@@ -1145,6 +1254,56 @@
     const useOtherAccountBtn = document.getElementById("useOtherAccountBtn");
 
     let pendingVerifyUser = null; // Firebase user object awaiting email verification
+
+    // ---------------- Custom modal (replaces alert / confirm) ----------------
+    const ICONS = { success: "✓", error: "✕", info: "ℹ" };
+
+    function showModal({ type = "info", title, message, okText = "OK" }) {
+      return new Promise((resolve) => {
+        appModalIcon.className = "app-modal-icon " + type;
+        appModalIcon.textContent = ICONS[type] || ICONS.info;
+        appModalTitle.textContent = title || "";
+        appModalMessage.textContent = message || "";
+        appModalPrimaryBtn.textContent = okText;
+        appModalPrimaryBtn.className = "app-modal-btn" + (type === "error" ? " danger" : "");
+        appModalSecondaryBtn.classList.add("hidden");
+
+        function cleanup() {
+          appModalOverlay.classList.remove("show");
+          appModalPrimaryBtn.removeEventListener("click", onOk);
+        }
+        function onOk() {
+          cleanup();
+          resolve(true);
+        }
+        appModalPrimaryBtn.addEventListener("click", onOk);
+        appModalOverlay.classList.add("show");
+      });
+    }
+
+    function showConfirm({ title, message, okText = "Confirm", cancelText = "Cancel", danger = false }) {
+      return new Promise((resolve) => {
+        appModalIcon.className = "app-modal-icon " + (danger ? "error" : "info");
+        appModalIcon.textContent = danger ? ICONS.error : ICONS.info;
+        appModalTitle.textContent = title || "";
+        appModalMessage.textContent = message || "";
+        appModalPrimaryBtn.textContent = okText;
+        appModalPrimaryBtn.className = "app-modal-btn" + (danger ? " danger" : "");
+        appModalSecondaryBtn.textContent = cancelText;
+        appModalSecondaryBtn.classList.remove("hidden");
+
+        function cleanup() {
+          appModalOverlay.classList.remove("show");
+          appModalPrimaryBtn.removeEventListener("click", onOk);
+          appModalSecondaryBtn.removeEventListener("click", onCancel);
+        }
+        function onOk() { cleanup(); resolve(true); }
+        function onCancel() { cleanup(); resolve(false); }
+        appModalPrimaryBtn.addEventListener("click", onOk);
+        appModalSecondaryBtn.addEventListener("click", onCancel);
+        appModalOverlay.classList.add("show");
+      });
+    }
 
     // ---------------- Init EmailJS ----------------
     if (window.emailjs) {
@@ -1612,7 +1771,7 @@
         await saveWalletItem(item);
         wallet.unshift(item);
 
-        alert(selectedCard.label + " added to your wallet!");
+        await showModal({ type: "success", title: "Added to wallet", message: selectedCard.label + " has been added to your wallet." });
 
         selectedView.classList.add("hidden");
         dashboardView.classList.add("hidden");
@@ -1621,7 +1780,7 @@
         renderWallet();
       } catch (err) {
         console.error("Failed to add to wallet:", err);
-        alert("Couldn't add this to your wallet right now. Please try again.");
+        await showModal({ type: "error", title: "Couldn't add to wallet", message: "Please try again." });
       } finally {
         buyBtn.disabled = false;
         buyBtn.textContent = originalLabel;
@@ -1787,7 +1946,12 @@
       const item = wallet.find((w) => w.id === itemId);
       if (!item) return;
 
-      const ok = confirm("Reset this " + (item.amount ? item.amount + " LKR" : item.label) + " request? The current code will be cleared and it will go back to pending.");
+      const ok = await showConfirm({
+        title: "Reset this request?",
+        message: "Reset this " + (item.amount ? item.amount + " LKR" : item.label) + " request? The current code will be cleared and it will go back to pending.",
+        okText: "Reset",
+        danger: true
+      });
       if (!ok) return;
 
       await releaseCardNumber(item.cardNumber);
@@ -1803,7 +1967,7 @@
         renderWallet();
       } catch (err) {
         console.error("Failed to reset item:", err);
-        alert("Couldn't reset this item right now. Please try again.");
+        await showModal({ type: "error", title: "Couldn't reset", message: "Please try again." });
       }
     }
 
@@ -1811,7 +1975,12 @@
       const item = wallet.find((w) => w.id === itemId);
       if (!item) return;
 
-      const ok = confirm("Delete this " + (item.amount ? item.amount + " LKR" : item.label) + " request from your wallet? This cannot be undone.");
+      const ok = await showConfirm({
+        title: "Delete this request?",
+        message: "Delete this " + (item.amount ? item.amount + " LKR" : item.label) + " request from your wallet? This cannot be undone.",
+        okText: "Delete",
+        danger: true
+      });
       if (!ok) return;
 
       try {
@@ -1821,7 +1990,7 @@
         renderWallet();
       } catch (err) {
         console.error("Failed to delete item:", err);
-        alert("Couldn't delete this item right now. Please try again.");
+        await showModal({ type: "error", title: "Couldn't delete", message: "Please try again." });
       }
     }
 
@@ -1831,11 +2000,11 @@
 
       const entered = (enteredValue || "").trim();
       if (entered.length !== 6 || !/^\d{6}$/.test(entered)) {
-        alert("Please enter the 6-digit code that was sent to your email.");
+        await showModal({ type: "error", title: "Invalid code", message: "Please enter the 6-digit code that was sent to your email." });
         return;
       }
       if (entered !== item.code) {
-        alert("That code doesn't match. Please check your email and try again.");
+        await showModal({ type: "error", title: "Code doesn't match", message: "Please check your email and try again." });
         return;
       }
 
@@ -1843,9 +2012,10 @@
       try {
         await saveWalletItem(item);
         renderWallet();
+        await showModal({ type: "success", title: "Card revealed", message: "Your recharge card number is ready below. Tap \"Contact for Payment\" to confirm payment with the owner." });
       } catch (err) {
         console.error("Failed to verify item:", err);
-        alert("Couldn't verify this code right now. Please try again.");
+        await showModal({ type: "error", title: "Couldn't verify", message: "Please try again." });
       }
     }
 
@@ -1854,7 +2024,7 @@
       if (!item) return;
 
       if (!window.emailjs) {
-        alert("Email service is not available right now. Please try again later.");
+        await showModal({ type: "error", title: "Email unavailable", message: "Email service is not available right now. Please try again later." });
         return;
       }
 
@@ -1880,7 +2050,7 @@
           btnEl.disabled = false;
           btnEl.textContent = "Generate Code";
         }
-        alert("Sorry, all " + item.label + " card numbers are currently out of stock. Please contact the owner on WhatsApp.");
+        await showModal({ type: "error", title: "Out of stock", message: "Sorry, all " + item.label + " card numbers are currently out of stock. Please contact the owner on WhatsApp." });
         return;
       }
 
@@ -1902,24 +2072,17 @@
         renderWallet();
         authLoader.classList.add("hidden");
 
-        alert(
-          "Thank you! A 6-digit code was sent to your email only. " +
-            "Enter it in the wallet to get your recharge card. " +
-            "You'll now be redirected to WhatsApp to contact the owner about your payment."
-        );
-
-        const waNumber = "94" + CONFIG.WHATSAPP_NUMBER.replace(/^0/, "");
-        const waMessage = encodeURIComponent(
-          "Hi, I just requested a " + item.label +
-            " recharge. Please confirm my payment so I can receive my card."
-        );
-        window.open("https://wa.me/" + waNumber + "?text=" + waMessage, "_blank");
+        await showModal({
+          type: "success",
+          title: "Code sent!",
+          message: "A 6-digit code was sent to your email only. Enter it in the wallet to reveal your recharge card, then tap \"Contact for Payment\" to confirm payment with the owner."
+        });
       } catch (err) {
         console.error("EmailJS send error:", err);
         authLoader.classList.add("hidden");
         await releaseCardNumber(cardNumber);
         const detail = (err && (err.text || err.message)) || "Unknown error";
-        alert("Failed to send the request: " + detail);
+        await showModal({ type: "error", title: "Couldn't send code", message: detail });
         if (btnEl) {
           btnEl.disabled = false;
           btnEl.textContent = "Generate Code";
