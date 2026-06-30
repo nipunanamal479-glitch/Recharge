@@ -4,96 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Digital System</title>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+    <script>
+        // Firebase Config
+        const firebaseConfig = {
+            databaseURL: "https://recharge-card-1840c-default-rtdb.asia-southeast1.firebaseio.app"
+        };
+        firebase.initializeApp(firebaseConfig);
+    </script>
+
     <style>
-        /* CSS කොටස මෙතනයි */
-        body {
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #0f172a, #312e81);
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        .login-container {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-        }
-
-        .glass-box {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            padding: 50px;
-            border-radius: 25px;
-            text-align: center;
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            width: 300px;
-        }
-
+        body { margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #0f172a, #312e81); font-family: 'Segoe UI', sans-serif; color: white; }
+        .glass-box { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); padding: 50px; border-radius: 25px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 300px; }
         h1 { margin-bottom: 10px; }
-
-        .google-btn {
-            margin-top: 30px;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 50px;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            color: #333;
-            transition: 0.3s;
-            width: 100%;
-        }
-
-        .google-btn:hover {
-            transform: scale(1.05);
-            background: #f0f0f0;
-        }
+        .google-btn { margin-top: 20px; padding: 12px 25px; border: none; border-radius: 50px; background: white; color: #333; font-weight: bold; cursor: pointer; width: 100%; transition: 0.3s; }
+        .google-btn:hover { transform: scale(1.05); }
+        .hidden { display: none; }
+        .card-ui { width: 100%; height: 100px; background: #6366f1; border-radius: 15px; display: flex; align-items: center; justify-content: center; margin-top: 20px; font-size: 1.2em; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="login-container">
-        <div class="glass-box">
-            <h1>Welcome</h1>
-            <p>Access your digital services</p>
-            
-            <button class="google-btn" onclick="login()">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20">
-                Sign in with Google
-            </button>
+    <div id="login-view" class="glass-box">
+        <h1>Welcome</h1>
+        <p>Access your digital services</p>
+        <button class="google-btn" onclick="login()">Sign in with Google</button>
+    </div>
+
+    <div id="dashboard-view" class="glass-box hidden">
+        <h3>SELECT CARD</h3>
+        <div id="card-list" style="display:grid; gap:10px; margin-top:20px;"></div>
+        
+        <div id="card-display" class="card-ui hidden">
+            <h2 id="generatedCode">XXXX-XXXX</h2>
         </div>
     </div>
 
+    <script src="data.js"></script>
     <script>
-        const CLIENT_ID = '12019111383-058lqu79k9jvbdcq7brqql1ukt1028l8.apps.googleusercontent.com';
-
         function login() {
-            const redirectUri = window.location.origin + window.location.pathname;
-            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=token&scope=email profile&prompt=consent`;
+            const CLIENT_ID = '12019111383-058lqu79k9jvbdcq7brqql1ukt1028l8.apps.googleusercontent.com';
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(window.location.origin + window.location.pathname)}&response_type=token&scope=email profile&prompt=consent`;
             window.location.href = authUrl;
         }
 
         window.onload = function() {
-            const hash = window.location.hash.substring(1);
-            const params = new URLSearchParams(hash);
-            const token = params.get('access_token');
-
+            const token = new URLSearchParams(window.location.hash.substring(1)).get('access_token');
             if (token) {
-                fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        alert("සාර්ථකව පිවිසුණි: " + data.name);
-                    })
-                    .catch(error => console.error('Error:', error));
+                document.getElementById('login-view').style.display = 'none';
+                document.getElementById('dashboard-view').classList.remove('hidden');
+                renderCards(); 
             }
         };
     </script>
