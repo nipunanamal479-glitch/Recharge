@@ -22,6 +22,7 @@
     --text-dim: #94a3b8;
     --danger: #ef4444;
     --danger-hover: #dc2626;
+    --success: #4ade80;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,6 +35,7 @@
     min-height: 100vh;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     color: var(--text);
+    overflow-x: hidden;
   }
 
   .hidden { display: none !important; }
@@ -48,6 +50,13 @@
     padding: 24px;
   }
 
+  /* Card flip stage */
+  .auth-stage {
+    width: 100%;
+    max-width: 360px;
+    perspective: 1400px;
+  }
+
   .login-card {
     background: var(--panel-glass);
     backdrop-filter: blur(12px);
@@ -56,14 +65,27 @@
     border-radius: 20px;
     padding: 40px 28px;
     width: 100%;
-    max-width: 360px;
     text-align: center;
     box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes card-in {
+    0% { opacity: 0; transform: translateY(14px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
   }
 
   .login-card .logo {
     font-size: 40px;
     margin-bottom: 8px;
+    display: inline-block;
+    animation: logo-glow 2.6s ease-in-out infinite;
+    filter: drop-shadow(0 0 0 rgba(251,191,36,0));
+  }
+
+  @keyframes logo-glow {
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(251,191,36,0.25)); transform: translateY(0); }
+    50% { filter: drop-shadow(0 0 14px rgba(251,191,36,0.65)); transform: translateY(-2px); }
   }
 
   .login-card h1 {
@@ -71,10 +93,11 @@
     margin-bottom: 6px;
   }
 
-  .login-card p {
+  .login-card p.subtitle {
     color: var(--text-dim);
     font-size: 14px;
     margin-bottom: 28px;
+    transition: opacity 0.2s ease;
   }
 
   #googleSignInBtn.google-btn-fake {
@@ -90,9 +113,11 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease;
   }
-  #googleSignInBtn.google-btn-fake:hover { background: #f1f3f5; }
-  #googleSignInBtn.google-btn-fake:disabled { opacity: 0.6; cursor: not-allowed; }
+  #googleSignInBtn.google-btn-fake:hover { background: #f1f3f5; transform: translateY(-1px); }
+  #googleSignInBtn.google-btn-fake:active { transform: translateY(0); }
+  #googleSignInBtn.google-btn-fake:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
   .auth-divider {
     display: flex;
@@ -109,23 +134,121 @@
     background: var(--border);
   }
 
+  /* ---------- Field with floating label + icon ---------- */
+  .field {
+    position: relative;
+    margin-bottom: 12px;
+    text-align: left;
+  }
+
   .auth-input {
     width: 100%;
     background: var(--panel);
     border: 1px solid var(--border);
     color: var(--text);
-    padding: 12px 14px;
+    padding: 14px 14px 14px 14px;
     border-radius: 10px;
     font-size: 14px;
-    margin-bottom: 10px;
     outline: none;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
   }
-  .auth-input:focus { border-color: var(--accent); }
+  .auth-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.18);
+  }
+  .auth-input.field-error {
+    border-color: var(--danger);
+    animation: shake 0.35s ease;
+  }
+  .auth-input.field-ok {
+    border-color: var(--success);
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(3px); }
+  }
+
+  .field-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 6px;
+    user-select: none;
+  }
+  .field-toggle:hover { color: var(--text); }
+
+  /* password strength meter */
+  .strength-wrap {
+    height: 4px;
+    border-radius: 4px;
+    background: rgba(148,163,184,0.15);
+    overflow: hidden;
+    margin: 6px 2px 0;
+  }
+  .strength-bar {
+    height: 100%;
+    width: 0%;
+    border-radius: 4px;
+    background: var(--danger);
+    transition: width 0.25s ease, background 0.25s ease;
+  }
+  .strength-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+    text-align: left;
+    min-height: 14px;
+  }
+
+  .match-hint {
+    font-size: 11.5px;
+    margin-top: 4px;
+    text-align: left;
+    min-height: 14px;
+    transition: color 0.2s ease;
+  }
+  .match-hint.ok { color: var(--success); }
+  .match-hint.bad { color: var(--danger); }
 
   .auth-error {
     color: var(--danger);
     font-size: 12.5px;
     text-align: left;
+    margin-bottom: 10px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.2s ease;
+  }
+  .auth-error.show {
+    max-height: 60px;
+    opacity: 1;
+    margin-bottom: 10px;
+  }
+
+  .auth-success {
+    color: var(--success);
+    font-size: 12.5px;
+    text-align: left;
+    margin-bottom: 10px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.2s ease;
+  }
+  .auth-success.show {
+    max-height: 60px;
+    opacity: 1;
     margin-bottom: 10px;
   }
 
@@ -134,14 +257,18 @@
     background: var(--accent);
     color: #fff;
     border: none;
-    padding: 12px;
+    padding: 13px;
     border-radius: 10px;
     font-size: 14.5px;
     font-weight: 700;
     cursor: pointer;
     margin-bottom: 10px;
+    margin-top: 4px;
+    transition: background 0.15s ease, transform 0.1s ease;
   }
-  .auth-primary-btn:hover { background: var(--accent-hover); }
+  .auth-primary-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  .auth-primary-btn:active { transform: translateY(0); }
+  .auth-primary-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
 
   .auth-secondary-btn {
     width: 100%;
@@ -153,8 +280,84 @@
     font-size: 13.5px;
     font-weight: 600;
     cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
   }
   .auth-secondary-btn:hover { color: var(--text); border-color: var(--accent); }
+
+  /* ---------- Sliding panel transition between Sign In / Sign Up ---------- */
+  .auth-panels {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .auth-panel {
+    width: 100%;
+  }
+
+  .auth-panel.slide-out-left {
+    animation: slide-out-left 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+  .auth-panel.slide-in-right {
+    animation: slide-in-right 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .auth-panel.slide-out-right {
+    animation: slide-out-right 0.32s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+  .auth-panel.slide-in-left {
+    animation: slide-in-left 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes slide-out-left {
+    to { opacity: 0; transform: translateX(-26px); }
+  }
+  @keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(26px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes slide-out-right {
+    to { opacity: 0; transform: translateX(26px); }
+  }
+  @keyframes slide-in-left {
+    from { opacity: 0; transform: translateX(-26px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* success checkmark burst shown after account creation */
+  .success-burst {
+    width: 64px;
+    height: 64px;
+    margin: 4px auto 14px;
+    border-radius: 50%;
+    background: rgba(74, 222, 128, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .success-burst svg {
+    width: 32px;
+    height: 32px;
+  }
+  .success-burst .ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid var(--success);
+    animation: ring-pop 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .success-burst .check-path {
+    stroke-dasharray: 28;
+    stroke-dashoffset: 28;
+    animation: check-draw 0.4s 0.25s ease forwards;
+  }
+  @keyframes ring-pop {
+    0% { transform: scale(0.4); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes check-draw {
+    to { stroke-dashoffset: 0; }
+  }
 
   /* ---------- App Shell ---------- */
   #appScreen {
@@ -682,23 +885,6 @@
     100% { opacity: 0.15; }
   }
 
-  /* Small inline spinner used inside buttons */
-  .btn-spinner {
-    display: inline-block;
-    width: 14px;
-    height: 14px;
-    border: 2px solid rgba(255,255,255,0.4);
-    border-top-color: #fff;
-    border-radius: 50%;
-    animation: btn-spin 0.7s linear infinite;
-    vertical-align: middle;
-    margin-right: 6px;
-  }
-
-  @keyframes btn-spin {
-    to { transform: rotate(360deg); }
-  }
-
   /* Full-screen overlay spinner (shown while switching accounts) */
   #authLoader {
     position: fixed;
@@ -716,54 +902,80 @@
   <!-- ================= BOOT LOADER ================= -->
   <div id="bootLoader">
     <div class="flower-spinner">
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
+      <div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div>
+      <div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div>
     </div>
   </div>
 
-  <!-- ================= AUTH SWITCH LOADER (shown briefly when signing in) ================= -->
+  <!-- ================= AUTH SWITCH LOADER ================= -->
   <div id="authLoader" class="hidden">
     <div class="flower-spinner">
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
-      <div class="petal"></div>
+      <div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div>
+      <div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div>
     </div>
   </div>
 
   <!-- ================= LOGIN SCREEN ================= -->
   <div id="loginScreen" class="hidden">
-    <div class="login-card">
-      <div class="logo">⚡</div>
-      <h1>Digital Recharge</h1>
-      <p>Sign in to continue to your dashboard</p>
+    <div class="auth-stage">
+      <div class="login-card">
+        <div class="logo">⚡</div>
+        <h1 id="authHeading">Digital Recharge</h1>
+        <p class="subtitle" id="authSubtitle">Sign in to continue to your dashboard</p>
 
-      <button type="button" class="google-btn-fake" id="googleSignInBtn" style="position:static;">
-        <svg width="18" height="18" viewBox="0 0 18 18" style="margin-right:8px;"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.71A5.4 5.4 0 0 1 3.69 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.59-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
-        Continue with Google
-      </button>
+        <button type="button" class="google-btn-fake" id="googleSignInBtn" style="position:static;">
+          <svg width="18" height="18" viewBox="0 0 18 18" style="margin-right:8px;"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.71A5.4 5.4 0 0 1 3.69 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.59-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+          Continue with Google
+        </button>
 
-      <div class="auth-divider"><span>or</span></div>
+        <div class="auth-divider"><span>or</span></div>
 
-      <!-- Email / password sign-in, backed by Firebase Authentication -->
-      <form id="emailAuthForm" autocomplete="off">
-        <input type="email" id="authEmail" class="auth-input" placeholder="Email" required />
-        <input type="password" id="authPassword" class="auth-input" placeholder="Password" required minlength="6" />
-        <div id="authError" class="auth-error hidden"></div>
-        <button type="submit" id="authSignInBtn" class="auth-primary-btn">Sign In</button>
-        <button type="button" id="authCreateBtn" class="auth-secondary-btn">Create an Account</button>
-      </form>
-      <p class="hint" style="margin-top:14px;">Secured by Firebase Authentication — works from any device.</p>
+        <div class="auth-panels">
+
+          <!-- ---- SIGN IN PANEL ---- -->
+          <div class="auth-panel" id="signInPanel">
+            <form id="emailAuthForm" autocomplete="off">
+              <div class="field">
+                <input type="email" id="authEmail" class="auth-input" placeholder="Email" required />
+              </div>
+              <div class="field">
+                <input type="password" id="authPassword" class="auth-input" placeholder="Password" required minlength="6" />
+                <button type="button" class="field-toggle" data-target="authPassword">SHOW</button>
+              </div>
+              <div id="authError" class="auth-error"></div>
+              <button type="submit" id="authSignInBtn" class="auth-primary-btn">Sign In</button>
+              <button type="button" id="authCreateBtn" class="auth-secondary-btn">Create an Account</button>
+            </form>
+          </div>
+
+          <!-- ---- SIGN UP PANEL ---- -->
+          <div class="auth-panel hidden" id="signUpPanel">
+            <form id="signUpForm" autocomplete="off">
+              <div class="field">
+                <input type="email" id="suEmail" class="auth-input" placeholder="Email" required />
+              </div>
+              <div class="field">
+                <input type="password" id="suPassword" class="auth-input" placeholder="Password" required minlength="6" />
+                <button type="button" class="field-toggle" data-target="suPassword">SHOW</button>
+                <div class="strength-wrap"><div class="strength-bar" id="strengthBar"></div></div>
+                <div class="strength-label" id="strengthLabel">&nbsp;</div>
+              </div>
+              <div class="field">
+                <input type="password" id="suConfirm" class="auth-input" placeholder="Confirm password" required minlength="6" />
+                <button type="button" class="field-toggle" data-target="suConfirm">SHOW</button>
+                <div class="match-hint" id="matchHint">&nbsp;</div>
+              </div>
+              <div id="signUpError" class="auth-error"></div>
+              <div id="signUpSuccess" class="auth-success"></div>
+              <button type="submit" id="signUpBtn" class="auth-primary-btn">Create Account</button>
+              <button type="button" id="backToSignInBtn" class="auth-secondary-btn">← Back to Sign In</button>
+            </form>
+          </div>
+
+        </div>
+
+        <p class="hint" style="margin-top:14px;">Secured by Firebase Authentication — works from any device.</p>
+      </div>
     </div>
   </div>
 
@@ -853,9 +1065,9 @@
     "use strict";
 
     // ---------------- State ----------------
-    let currentUser = null;     // { uid, name, email }
-    let selectedCard = null;    // CONFIG.CARDS item
-    let wallet = [];            // [{ id, cardId, label, amount, code, cardNumber, verified, status, createdAt }]
+    let currentUser = null;
+    let selectedCard = null;
+    let wallet = [];
 
     // ---------------- DOM refs ----------------
     const bootLoader = document.getElementById("bootLoader");
@@ -879,6 +1091,13 @@
     const walletList = document.getElementById("walletList");
 
     const googleSignInBtn = document.getElementById("googleSignInBtn");
+
+    const authHeading = document.getElementById("authHeading");
+    const authSubtitle = document.getElementById("authSubtitle");
+
+    const signInPanel = document.getElementById("signInPanel");
+    const signUpPanel = document.getElementById("signUpPanel");
+
     const emailAuthForm = document.getElementById("emailAuthForm");
     const authEmail = document.getElementById("authEmail");
     const authPassword = document.getElementById("authPassword");
@@ -886,23 +1105,61 @@
     const authSignInBtn = document.getElementById("authSignInBtn");
     const authCreateBtn = document.getElementById("authCreateBtn");
 
-    // ---------------- Init EmailJS (still used to email the 6-digit OTP) ----------------
+    const signUpForm = document.getElementById("signUpForm");
+    const suEmail = document.getElementById("suEmail");
+    const suPassword = document.getElementById("suPassword");
+    const suConfirm = document.getElementById("suConfirm");
+    const strengthBar = document.getElementById("strengthBar");
+    const strengthLabel = document.getElementById("strengthLabel");
+    const matchHint = document.getElementById("matchHint");
+    const signUpError = document.getElementById("signUpError");
+    const signUpSuccess = document.getElementById("signUpSuccess");
+    const signUpBtn = document.getElementById("signUpBtn");
+    const backToSignInBtn = document.getElementById("backToSignInBtn");
+
+    // ---------------- Init EmailJS ----------------
     if (window.emailjs) {
       emailjs.init({ publicKey: CONFIG.EMAILJS_PUBLIC_KEY });
     }
 
-    // ---------------- Auth error helpers ----------------
+    // ---------------- Show/Hide password toggles ----------------
+    document.querySelectorAll(".field-toggle").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const target = document.getElementById(btn.getAttribute("data-target"));
+        if (!target) return;
+        const isPw = target.type === "password";
+        target.type = isPw ? "text" : "password";
+        btn.textContent = isPw ? "HIDE" : "SHOW";
+      });
+    });
+
+    // ---------------- Error/success message helpers ----------------
     function showAuthError(message) {
       authError.textContent = message;
-      authError.classList.remove("hidden");
+      authError.classList.add("show");
     }
     function clearAuthError() {
-      authError.textContent = "";
-      authError.classList.add("hidden");
+      authError.classList.remove("show");
+      setTimeout(() => { if (!authError.classList.contains("show")) authError.textContent = ""; }, 200);
     }
+    function showSignUpError(message) {
+      signUpSuccess.classList.remove("show");
+      signUpError.textContent = message;
+      signUpError.classList.add("show");
+    }
+    function clearSignUpError() {
+      signUpError.classList.remove("show");
+      setTimeout(() => { if (!signUpError.classList.contains("show")) signUpError.textContent = ""; }, 200);
+    }
+    function showSignUpSuccess(message) {
+      clearSignUpError();
+      signUpSuccess.textContent = message;
+      signUpSuccess.classList.add("show");
+    }
+
     function friendlyAuthError(err) {
       const code = err && err.code ? err.code : "";
-      if (code === "auth/email-already-in-use") return "An account with this email already exists. Tap \"Sign In\" instead.";
+      if (code === "auth/email-already-in-use") return "An account with this email already exists. Try signing in instead.";
       if (code === "auth/invalid-email") return "Please enter a valid email address.";
       if (code === "auth/weak-password") return "Password should be at least 6 characters.";
       if (code === "auth/user-not-found" || code === "auth/invalid-credential") return "No account found, or the password is incorrect.";
@@ -911,13 +1168,19 @@
       return (err && err.message) || "Something went wrong. Please try again.";
     }
 
+    function flashFieldError(input) {
+      input.classList.remove("field-error");
+      // force reflow so the shake animation can re-trigger
+      void input.offsetWidth;
+      input.classList.add("field-error");
+    }
+
     // ---------------- Google sign-in ----------------
     googleSignInBtn.addEventListener("click", async () => {
       clearAuthError();
       googleSignInBtn.disabled = true;
       try {
         await signInWithPopup(auth, googleProvider);
-        // onAuthStateChanged will take it from here.
       } catch (err) {
         console.error("Google sign-in error:", err);
         showAuthError(friendlyAuthError(err));
@@ -926,7 +1189,7 @@
       }
     });
 
-    // ---------------- Email / password sign-in (Firebase Auth) ----------------
+    // ---------------- Email / password sign-in ----------------
     emailAuthForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       clearAuthError();
@@ -942,39 +1205,168 @@
       } catch (err) {
         console.error("Email sign-in error:", err);
         showAuthError(friendlyAuthError(err));
+        flashFieldError(authPassword);
       } finally {
         authSignInBtn.disabled = false;
         authSignInBtn.textContent = "Sign In";
       }
     });
 
-    authCreateBtn.addEventListener("click", async () => {
+    // ---------------- Switch to Sign Up panel (animated slide) ----------------
+    function goToSignUp() {
       clearAuthError();
+      authHeading.textContent = "Create your account";
+      authSubtitle.textContent = "Sign up to start buying recharge cards";
 
-      const email = authEmail.value.trim();
-      const password = authPassword.value;
+      signInPanel.classList.add("slide-out-left");
+      signInPanel.addEventListener("animationend", function handler() {
+        signInPanel.removeEventListener("animationend", handler);
+        signInPanel.classList.add("hidden");
+        signInPanel.classList.remove("slide-out-left");
+
+        signUpPanel.classList.remove("hidden");
+        signUpPanel.classList.add("slide-in-right");
+        signUpPanel.addEventListener("animationend", function h2() {
+          signUpPanel.removeEventListener("animationend", h2);
+          signUpPanel.classList.remove("slide-in-right");
+        });
+      });
+
+      suEmail.value = authEmail.value.trim();
+      suPassword.value = "";
+      suConfirm.value = "";
+      updateStrength();
+      updateMatchHint();
+      clearSignUpError();
+      signUpSuccess.classList.remove("show");
+      [suEmail, suPassword, suConfirm].forEach((el) => el.classList.remove("field-error", "field-ok"));
+    }
+
+    function goToSignIn() {
+      clearSignUpError();
+      signUpSuccess.classList.remove("show");
+      authHeading.textContent = "Digital Recharge";
+      authSubtitle.textContent = "Sign in to continue to your dashboard";
+
+      signUpPanel.classList.add("slide-out-right");
+      signUpPanel.addEventListener("animationend", function handler() {
+        signUpPanel.removeEventListener("animationend", handler);
+        signUpPanel.classList.add("hidden");
+        signUpPanel.classList.remove("slide-out-right");
+
+        signInPanel.classList.remove("hidden");
+        signInPanel.classList.add("slide-in-left");
+        signInPanel.addEventListener("animationend", function h2() {
+          signInPanel.removeEventListener("animationend", h2);
+          signInPanel.classList.remove("slide-in-left");
+        });
+      });
+
+      clearAuthError();
+      authPassword.value = "";
+    }
+
+    authCreateBtn.addEventListener("click", goToSignUp);
+    backToSignInBtn.addEventListener("click", goToSignIn);
+
+    // ---------------- Password strength meter ----------------
+    function updateStrength() {
+      const val = suPassword.value;
+      let score = 0;
+      if (val.length >= 6) score++;
+      if (val.length >= 10) score++;
+      if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
+      if (/\d/.test(val)) score++;
+      if (/[^A-Za-z0-9]/.test(val)) score++;
+
+      const pct = val.length === 0 ? 0 : Math.min(100, (score / 5) * 100);
+      strengthBar.style.width = pct + "%";
+
+      let color = "var(--danger)";
+      let label = "";
+      if (val.length === 0) {
+        label = "\u00A0";
+      } else if (score <= 1) {
+        label = "Weak password";
+        color = "#ef4444";
+      } else if (score <= 3) {
+        label = "Okay password";
+        color = "#fbbf24";
+      } else {
+        label = "Strong password";
+        color = "#4ade80";
+      }
+      strengthBar.style.background = color;
+      strengthLabel.textContent = label;
+      strengthLabel.style.color = val.length === 0 ? "var(--text-dim)" : color;
+    }
+
+    function updateMatchHint() {
+      if (!suConfirm.value) {
+        matchHint.textContent = "\u00A0";
+        matchHint.className = "match-hint";
+        suConfirm.classList.remove("field-ok", "field-error");
+        return;
+      }
+      if (suConfirm.value === suPassword.value) {
+        matchHint.textContent = "✓ Passwords match";
+        matchHint.className = "match-hint ok";
+        suConfirm.classList.add("field-ok");
+        suConfirm.classList.remove("field-error");
+      } else {
+        matchHint.textContent = "Passwords don't match yet";
+        matchHint.className = "match-hint bad";
+        suConfirm.classList.remove("field-ok");
+      }
+    }
+
+    suPassword.addEventListener("input", () => { updateStrength(); updateMatchHint(); });
+    suConfirm.addEventListener("input", updateMatchHint);
+
+    // ---------------- Sign Up submit ----------------
+    signUpForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearSignUpError();
+      signUpSuccess.classList.remove("show");
+
+      const email = suEmail.value.trim();
+      const password = suPassword.value;
+      const confirm = suConfirm.value;
+
+      [suEmail, suPassword, suConfirm].forEach((el) => el.classList.remove("field-error"));
 
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        showAuthError("Please enter a valid email address.");
+        showSignUpError("Please enter a valid email address.");
+        flashFieldError(suEmail);
         return;
       }
       if (!password || password.length < 6) {
-        showAuthError("Password must be at least 6 characters.");
+        showSignUpError("Password must be at least 6 characters.");
+        flashFieldError(suPassword);
+        return;
+      }
+      if (password !== confirm) {
+        showSignUpError("Passwords don't match. Please re-type them.");
+        flashFieldError(suConfirm);
         return;
       }
 
-      authCreateBtn.disabled = true;
-      authCreateBtn.innerHTML = '<span class="btn-spinner"></span> Creating account...';
+      signUpBtn.disabled = true;
+      signUpBtn.innerHTML = '<span class="btn-spinner"></span> Creating account...';
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         const niceName = email.split("@")[0];
         try { await updateProfile(cred.user, { displayName: niceName }); } catch (e) { /* non-fatal */ }
+
+        showSignUpSuccess("✓ Account created! Taking you to your dashboard...");
+        signUpBtn.innerHTML = "Account Created";
+        // onAuthStateChanged will switch screens automatically.
       } catch (err) {
         console.error("Create account error:", err);
-        showAuthError(friendlyAuthError(err));
-      } finally {
-        authCreateBtn.disabled = false;
-        authCreateBtn.textContent = "Create an Account";
+        showSignUpError(friendlyAuthError(err));
+        if (err && err.code === "auth/email-already-in-use") flashFieldError(suEmail);
+        signUpBtn.disabled = false;
+        signUpBtn.textContent = "Create Account";
       }
     });
 
@@ -1018,10 +1410,6 @@
     }
 
     // ---------------- Firestore: shared card-number stock pool ----------------
-    // Real 12-digit card numbers live in data.js (CONFIG.CARDS[].cardNumbers).
-    // "usedCardNumbers" collection in Firestore tracks which ones have
-    // already been handed out — shared across every user/device, so the
-    // same number is never given to two different people.
     async function isCardNumberUsed(number) {
       const snap = await getDoc(doc(db, "usedCardNumbers", number));
       return snap.exists();
@@ -1048,7 +1436,7 @@
           return number;
         }
       }
-      return null; // pool is out of stock
+      return null;
     }
 
     // ---------------- Render: card grid ----------------
@@ -1096,7 +1484,7 @@
         code: null,
         cardNumber: null,
         verified: false,
-        status: "pending", // pending -> sent
+        status: "pending",
         createdAt: new Date().toISOString()
       };
 
@@ -1155,8 +1543,6 @@
         let actionHtml = "";
 
         if (item.status === "sent" && item.code && item.verified) {
-          // Code has been verified by the user — reveal the real card number
-          // with a smooth "burst" pop animation instead of just printing it.
           const revealNumber = item.cardNumber || item.code;
           const sparks = Array.from({ length: 10 })
             .map((_, i) => {
@@ -1184,8 +1570,6 @@
             </div>
           `;
         } else if (item.status === "sent" && item.code && !item.verified) {
-          // Code already requested but not yet shown — user must enter the
-          // 6-digit code (emailed to them) to reveal the real card number.
           codeHtml = `
             <div class="hint" style="margin-top:0; margin-bottom:10px;">A 6-digit code was sent to your email. Enter it below to reveal it here.</div>
             <div class="verify-row">
@@ -1222,7 +1606,6 @@
         walletList.appendChild(el);
       });
 
-      // Wire up generate buttons
       walletList.querySelectorAll(".wallet-generate-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
           const itemId = btn.getAttribute("data-id");
@@ -1230,8 +1613,6 @@
         });
       });
 
-      // Wire up verify buttons: user must type the 6-digit code that was
-      // emailed to them before it's revealed nicely on screen.
       walletList.querySelectorAll(".verify-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
           const itemId = btn.getAttribute("data-id");
@@ -1248,7 +1629,6 @@
         });
       });
 
-      // Wire up reset buttons
       walletList.querySelectorAll(".wallet-reset-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
           const itemId = btn.getAttribute("data-id");
@@ -1256,7 +1636,6 @@
         });
       });
 
-      // Wire up delete buttons
       walletList.querySelectorAll(".wallet-delete-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
           const itemId = btn.getAttribute("data-id");
@@ -1264,7 +1643,6 @@
         });
       });
 
-      // Wire up "Contact for Payment" buttons
       walletList.querySelectorAll(".wallet-contact-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
           const itemId = btn.getAttribute("data-id");
@@ -1410,8 +1788,6 @@
             "You'll now be redirected to WhatsApp to contact the owner about your payment."
         );
 
-        // WhatsApp is only to contact the owner about payment — the code
-        // itself is never included here, it only ever goes to email.
         const waNumber = "94" + CONFIG.WHATSAPP_NUMBER.replace(/^0/, "");
         const waMessage = encodeURIComponent(
           "Hi, I just requested a " + item.label +
@@ -1421,7 +1797,7 @@
       } catch (err) {
         console.error("EmailJS send error:", err);
         authLoader.classList.add("hidden");
-        await releaseCardNumber(cardNumber); // don't waste the number if email failed
+        await releaseCardNumber(cardNumber);
         const detail = (err && (err.text || err.message)) || "Unknown error";
         alert("Failed to send the request: " + detail);
         if (btnEl) {
@@ -1452,6 +1828,16 @@
       clearAuthError();
       authEmail.value = "";
       authPassword.value = "";
+
+      // make sure we land back on the sign-in panel each time
+      signUpPanel.classList.add("hidden");
+      signUpPanel.classList.remove("slide-in-right", "slide-out-right");
+      signInPanel.classList.remove("hidden");
+      signInPanel.classList.remove("slide-out-left", "slide-in-left");
+      authHeading.textContent = "Digital Recharge";
+      authSubtitle.textContent = "Sign in to continue to your dashboard";
+      signUpBtn.disabled = false;
+      signUpBtn.textContent = "Create Account";
     }
 
     async function showAppScreen() {
