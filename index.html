@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>Digital Recharge</title>
 
-<!-- Google Identity Services -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <!-- EmailJS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
@@ -79,11 +77,84 @@
     margin-bottom: 28px;
   }
 
-  #googleSignInBtn {
+  #googleSignInBtn.google-btn-fake {
+    width: 100%;
+    height: 44px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: #1f2430;
+    font-size: 14.5px;
+    font-weight: 600;
     display: flex;
+    align-items: center;
     justify-content: center;
-    min-height: 4px;
+    cursor: pointer;
   }
+  #googleSignInBtn.google-btn-fake:hover { background: #f1f3f5; }
+  #googleSignInBtn.google-btn-fake:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .auth-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0 16px;
+    color: var(--text-dim);
+    font-size: 12.5px;
+  }
+  .auth-divider::before, .auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .auth-input {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 14px;
+    margin-bottom: 10px;
+    outline: none;
+  }
+  .auth-input:focus { border-color: var(--accent); }
+
+  .auth-error {
+    color: var(--danger);
+    font-size: 12.5px;
+    text-align: left;
+    margin-bottom: 10px;
+  }
+
+  .auth-primary-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 10px;
+  }
+  .auth-primary-btn:hover { background: var(--accent-hover); }
+
+  .auth-secondary-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    padding: 11px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .auth-secondary-btn:hover { color: var(--text); border-color: var(--accent); }
 
   /* ---------- App Shell ---------- */
   #appScreen {
@@ -394,12 +465,66 @@
     margin-bottom: 10px;
   }
 
+  .wallet-item-code-wrap {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 22px 10px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
   .wallet-item-code {
-    font-size: 18px;
+    position: relative;
+    z-index: 2;
+    font-size: 24px;
     font-weight: 800;
     letter-spacing: 3px;
     color: #4ade80;
-    margin-bottom: 8px;
+    text-shadow: 0 0 18px rgba(74, 222, 128, 0.6);
+    animation: code-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+
+  @keyframes code-pop {
+    0%   { transform: scale(0.2); opacity: 0; }
+    55%  { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .burst-ring {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(74,222,128,0.9), rgba(59,130,246,0.6) 60%, transparent 70%);
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    animation: burst-expand 0.7s ease-out forwards;
+    z-index: 1;
+  }
+
+  @keyframes burst-expand {
+    0%   { transform: translate(-50%, -50%) scale(0); opacity: 0.9; }
+    100% { transform: translate(-50%, -50%) scale(9); opacity: 0; }
+  }
+
+  .burst-spark {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #4ade80;
+    left: 50%;
+    top: 50%;
+    z-index: 1;
+    animation: spark-fly 0.7s ease-out forwards;
+  }
+
+  @keyframes spark-fly {
+    0%   { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(-50%, -50%) translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
   }
 
   .wallet-generate-btn {
@@ -481,6 +606,19 @@
     cursor: pointer;
   }
   .wallet-delete-btn:hover { background: var(--danger); color: #fff; }
+
+  .wallet-contact-btn {
+    width: 100%;
+    background: #25d366;
+    color: #06280f;
+    border: none;
+    padding: 11px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .wallet-contact-btn:hover { background: #1ebe5a; }
 
   .btn-spinner {
     width: 14px;
@@ -609,7 +747,23 @@
       <div class="logo">⚡</div>
       <h1>Digital Recharge</h1>
       <p>Sign in to continue to your dashboard</p>
-      <div id="googleSignInBtn"></div>
+
+      <button type="button" class="google-btn-fake" id="googleSignInBtn" style="position:static;">
+        <svg width="18" height="18" viewBox="0 0 18 18" style="margin-right:8px;"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.71A5.4 5.4 0 0 1 3.69 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.59-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="auth-divider"><span>or</span></div>
+
+      <!-- Email / password sign-in, backed by Firebase Authentication -->
+      <form id="emailAuthForm" autocomplete="off">
+        <input type="email" id="authEmail" class="auth-input" placeholder="Email" required />
+        <input type="password" id="authPassword" class="auth-input" placeholder="Password" required minlength="6" />
+        <div id="authError" class="auth-error hidden"></div>
+        <button type="submit" id="authSignInBtn" class="auth-primary-btn">Sign In</button>
+        <button type="button" id="authCreateBtn" class="auth-secondary-btn">Create an Account</button>
+      </form>
+      <p class="hint" style="margin-top:14px;">Secured by Firebase Authentication — works from any device.</p>
     </div>
   </div>
 
@@ -666,410 +820,587 @@
     </main>
   </div>
 
-<script>
-(function () {
-  "use strict";
+<script type="module">
+  // ==========================================================
+  // Firebase setup (Auth + Firestore) — free Spark plan project
+  // ==========================================================
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import {
+    getAuth, GoogleAuthProvider, signInWithPopup,
+    createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    onAuthStateChanged, signOut, updateProfile
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import {
+    getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  // ---------------- State ----------------
-  let currentUser = null;     // { name, email }
-  let selectedCard = null;    // CONFIG.CARDS item
-  let wallet = [];            // [{ id, cardId, label, amount, code, status, createdAt }]
+  const firebaseConfig = {
+    apiKey: "AIzaSyA0bGI0PErs56jTIjW_3P4-2bgwEIRfBTI",
+    authDomain: "recharge-card-79265.firebaseapp.com",
+    projectId: "recharge-card-79265",
+    storageBucket: "recharge-card-79265.firebasestorage.app",
+    messagingSenderId: "619828501430",
+    appId: "1:619828501430:web:0ac8da4d3d7ce0d020bf17",
+    measurementId: "G-093TL9ZJYK"
+  };
 
-  // ---------------- DOM refs ----------------
-  const bootLoader = document.getElementById("bootLoader");
-  const authLoader = document.getElementById("authLoader");
-  const loginScreen = document.getElementById("loginScreen");
-  const appScreen = document.getElementById("appScreen");
-  const accountBtn = document.getElementById("accountBtn");
-  const accountDropdown = document.getElementById("accountDropdown");
-  const logoutBtn = document.getElementById("logoutBtn");
-  const userNameLabel = document.getElementById("userNameLabel");
-  const walletNavBtn = document.getElementById("walletNavBtn");
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const googleProvider = new GoogleAuthProvider();
 
-  const dashboardView = document.getElementById("dashboardView");
-  const selectedView = document.getElementById("selectedView");
-  const walletView = document.getElementById("walletView");
-  const cardGrid = document.getElementById("cardGrid");
-  const selectedAmountLabel = document.getElementById("selectedAmountLabel");
-  const buyBtn = document.getElementById("buyBtn");
-  const backBtn = document.getElementById("backBtn");
-  const walletBackBtn = document.getElementById("walletBackBtn");
-  const walletList = document.getElementById("walletList");
+  (function () {
+    "use strict";
 
-  // ---------------- Init EmailJS ----------------
-  if (window.emailjs) {
-    emailjs.init({ publicKey: CONFIG.EMAILJS_PUBLIC_KEY });
-  }
+    // ---------------- State ----------------
+    let currentUser = null;     // { uid, name, email }
+    let selectedCard = null;    // CONFIG.CARDS item
+    let wallet = [];            // [{ id, cardId, label, amount, code, cardNumber, verified, status, createdAt }]
 
-  // ---------------- Utility: JWT decode ----------------
-  function decodeJwt(token) {
-    try {
-      const base64Url = token.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const jsonPayload = decodeURIComponent(
-        atob(base64)
-          .split("")
-          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-          .join("")
-      );
-      return JSON.parse(jsonPayload);
-    } catch (e) {
-      console.error("Failed to decode JWT:", e);
-      return null;
+    // ---------------- DOM refs ----------------
+    const bootLoader = document.getElementById("bootLoader");
+    const authLoader = document.getElementById("authLoader");
+    const loginScreen = document.getElementById("loginScreen");
+    const appScreen = document.getElementById("appScreen");
+    const accountBtn = document.getElementById("accountBtn");
+    const accountDropdown = document.getElementById("accountDropdown");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const userNameLabel = document.getElementById("userNameLabel");
+    const walletNavBtn = document.getElementById("walletNavBtn");
+
+    const dashboardView = document.getElementById("dashboardView");
+    const selectedView = document.getElementById("selectedView");
+    const walletView = document.getElementById("walletView");
+    const cardGrid = document.getElementById("cardGrid");
+    const selectedAmountLabel = document.getElementById("selectedAmountLabel");
+    const buyBtn = document.getElementById("buyBtn");
+    const backBtn = document.getElementById("backBtn");
+    const walletBackBtn = document.getElementById("walletBackBtn");
+    const walletList = document.getElementById("walletList");
+
+    const googleSignInBtn = document.getElementById("googleSignInBtn");
+    const emailAuthForm = document.getElementById("emailAuthForm");
+    const authEmail = document.getElementById("authEmail");
+    const authPassword = document.getElementById("authPassword");
+    const authError = document.getElementById("authError");
+    const authSignInBtn = document.getElementById("authSignInBtn");
+    const authCreateBtn = document.getElementById("authCreateBtn");
+
+    // ---------------- Init EmailJS (still used to email the 6-digit OTP) ----------------
+    if (window.emailjs) {
+      emailjs.init({ publicKey: CONFIG.EMAILJS_PUBLIC_KEY });
     }
-  }
 
-  // ---------------- Wallet storage helpers ----------------
-  // IMPORTANT: wallet is namespaced per-account (by email) so switching
-  // Google accounts never shows another account's pending/sent items.
-  function getWalletStorageKey() {
-    const email = currentUser && currentUser.email ? currentUser.email : "guest";
-    return CONFIG.STORAGE_KEYS.WALLET + ":" + email;
-  }
-
-  function loadWallet() {
-    // Always reset in-memory wallet first so a previous account's
-    // data can never leak into the newly logged-in account's view.
-    wallet = [];
-    try {
-      const raw = localStorage.getItem(getWalletStorageKey());
-      wallet = raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      wallet = [];
+    // ---------------- Auth error helpers ----------------
+    function showAuthError(message) {
+      authError.textContent = message;
+      authError.classList.remove("hidden");
     }
-  }
-
-  function saveWallet() {
-    localStorage.setItem(getWalletStorageKey(), JSON.stringify(wallet));
-  }
-
-  function generateRandomCode() {
-    return String(Math.floor(100000 + Math.random() * 900000));
-  }
-
-  // ---------------- Card number pool (from data.js) ----------------
-  // Real 12-digit card numbers live in data.js (CONFIG.CARDS[].cardNumbers).
-  // Once a number is given to someone it's marked "used" (tracked in
-  // localStorage, shared across accounts on this device) so the same
-  // 12-digit number never gets handed out twice.
-  function getUsedCardNumbersKey() {
-    return CONFIG.STORAGE_KEYS.WALLET + ":usedCardNumbers";
-  }
-
-  function getUsedCardNumbers() {
-    try {
-      const raw = localStorage.getItem(getUsedCardNumbersKey());
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
+    function clearAuthError() {
+      authError.textContent = "";
+      authError.classList.add("hidden");
     }
-  }
+    function friendlyAuthError(err) {
+      const code = err && err.code ? err.code : "";
+      if (code === "auth/email-already-in-use") return "An account with this email already exists. Tap \"Sign In\" instead.";
+      if (code === "auth/invalid-email") return "Please enter a valid email address.";
+      if (code === "auth/weak-password") return "Password should be at least 6 characters.";
+      if (code === "auth/user-not-found" || code === "auth/invalid-credential") return "No account found, or the password is incorrect.";
+      if (code === "auth/wrong-password") return "Incorrect password. Please try again.";
+      if (code === "auth/popup-closed-by-user") return "Google sign-in was cancelled.";
+      return (err && err.message) || "Something went wrong. Please try again.";
+    }
 
-  function markCardNumberUsed(number) {
-    const used = getUsedCardNumbers();
-    used.push(number);
-    localStorage.setItem(getUsedCardNumbersKey(), JSON.stringify(used));
-  }
-
-  function pickCardNumberForCard(cardId) {
-    const cardDef = CONFIG.CARDS.find((c) => c.id === cardId);
-    if (!cardDef || !Array.isArray(cardDef.cardNumbers)) return null;
-
-    const used = getUsedCardNumbers();
-    const available = cardDef.cardNumbers.find((n) => used.indexOf(n) === -1);
-    if (!available) return null; // pool is out of stock
-
-    markCardNumberUsed(available);
-    return available;
-  }
-
-  // ---------------- Render: card grid ----------------
-  function renderCardGrid() {
-    cardGrid.innerHTML = "";
-    CONFIG.CARDS.forEach((card) => {
-      const btn = document.createElement("div");
-      btn.className = "recharge-card";
-      btn.innerHTML = `
-        <div class="icon">💳</div>
-        <div class="amount">${card.label}</div>
-      `;
-      btn.addEventListener("click", () => selectCard(card));
-      cardGrid.appendChild(btn);
+    // ---------------- Google sign-in ----------------
+    googleSignInBtn.addEventListener("click", async () => {
+      clearAuthError();
+      googleSignInBtn.disabled = true;
+      try {
+        await signInWithPopup(auth, googleProvider);
+        // onAuthStateChanged will take it from here.
+      } catch (err) {
+        console.error("Google sign-in error:", err);
+        showAuthError(friendlyAuthError(err));
+      } finally {
+        googleSignInBtn.disabled = false;
+      }
     });
-  }
 
-  function selectCard(card) {
-    selectedCard = card;
-    selectedAmountLabel.textContent = card.label;
-    walletView.classList.add("hidden");
-    dashboardView.classList.add("hidden");
-    selectedView.classList.remove("hidden");
-  }
+    // ---------------- Email / password sign-in (Firebase Auth) ----------------
+    emailAuthForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearAuthError();
 
-  backBtn.addEventListener("click", () => {
-    selectedView.classList.add("hidden");
-    dashboardView.classList.remove("hidden");
-    selectedCard = null;
-  });
+      const email = authEmail.value.trim();
+      const password = authPassword.value;
+      if (!email || !password) return;
 
-  // ---------------- Buy flow ----------------
-  buyBtn.addEventListener("click", () => {
-    if (!selectedCard) return;
+      authSignInBtn.disabled = true;
+      authSignInBtn.innerHTML = '<span class="btn-spinner"></span> Signing in...';
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        console.error("Email sign-in error:", err);
+        showAuthError(friendlyAuthError(err));
+      } finally {
+        authSignInBtn.disabled = false;
+        authSignInBtn.textContent = "Sign In";
+      }
+    });
 
-    const item = {
-      id: "wi_" + Date.now(),
-      cardId: selectedCard.id,
-      label: selectedCard.label,
-      amount: selectedCard.amount,
-      code: null,
-      verified: false,
-      status: "pending", // pending -> sent
-      createdAt: new Date().toISOString()
-    };
+    authCreateBtn.addEventListener("click", async () => {
+      clearAuthError();
 
-    wallet.unshift(item);
-    saveWallet();
+      const email = authEmail.value.trim();
+      const password = authPassword.value;
 
-    alert(selectedCard.label + " added to your wallet!");
-
-    // Navigate to wallet view
-    selectedView.classList.add("hidden");
-    dashboardView.classList.add("hidden");
-    walletView.classList.remove("hidden");
-    selectedCard = null;
-    renderWallet();
-  });
-
-  // ---------------- Wallet view ----------------
-  walletNavBtn.addEventListener("click", () => {
-    dashboardView.classList.add("hidden");
-    selectedView.classList.add("hidden");
-    walletView.classList.remove("hidden");
-    renderWallet();
-  });
-
-  walletBackBtn.addEventListener("click", () => {
-    walletView.classList.add("hidden");
-    dashboardView.classList.remove("hidden");
-  });
-
-  function renderWallet() {
-    walletList.innerHTML = "";
-
-    if (wallet.length === 0) {
-      walletList.innerHTML = '<div class="wallet-empty">No purchases yet. Buy a recharge card to get started.</div>';
-      return;
-    }
-
-    wallet.forEach((item) => {
-      const el = document.createElement("div");
-      el.className = "wallet-item";
-
-      const dateStr = new Date(item.createdAt).toLocaleString();
-      const statusClass = item.status === "sent" ? "sent" : "pending";
-      const statusLabel = item.status === "sent" ? "Sent" : "Pending";
-      const amountText = item.amount ? `${item.amount} LKR` : item.label;
-
-      let codeHtml = "";
-      let actionHtml = "";
-
-      if (item.status === "sent" && item.code && item.verified) {
-        // Code has been verified by the user — reveal the real card number.
-        codeHtml = `<div class="wallet-item-code">${item.cardNumber || item.code}</div>`;
-        actionHtml = `
-          <div class="hint" style="margin-top:0; margin-bottom:10px;">Code was sent to your email only.</div>
-          <div class="wallet-row-actions">
-            <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
-            <button class="wallet-delete-btn" data-id="${item.id}">🗑 Delete</button>
-          </div>
-        `;
-      } else if (item.status === "sent" && item.code && !item.verified) {
-        // Code already requested but not yet shown — user must enter the
-        // 6-digit code (the same one emailed/whatsapp'd to them) to reveal it.
-        codeHtml = `
-          <div class="hint" style="margin-top:0; margin-bottom:10px;">A 6-digit code was sent to your email. Enter it below to reveal it here.</div>
-          <div class="verify-row">
-            <input type="text" inputmode="numeric" maxlength="6" class="verify-input" data-id="${item.id}" placeholder="Enter your 6-digit code" />
-            <button class="verify-btn" data-id="${item.id}">Get your recharge card</button>
-          </div>
-        `;
-        actionHtml = `
-          <div class="wallet-row-actions" style="margin-top:10px;">
-            <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
-            <button class="wallet-delete-btn" data-id="${item.id}">🗑 Delete</button>
-          </div>
-        `;
-      } else {
-        actionHtml = `
-          <div class="wallet-row-actions">
-            <button class="wallet-generate-btn" data-id="${item.id}" style="flex:1;">Generate Code</button>
-            <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
-            <button class="wallet-delete-btn" data-id="${item.id}">🗑 Delete</button>
-          </div>
-        `;
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showAuthError("Please enter a valid email address.");
+        return;
+      }
+      if (!password || password.length < 6) {
+        showAuthError("Password must be at least 6 characters.");
+        return;
       }
 
-      el.innerHTML = `
-        <div class="wallet-item-top">
-          <div class="wallet-item-amount">${amountText}</div>
-          <div class="wallet-item-status ${statusClass}">${statusLabel}</div>
-        </div>
-        <div class="wallet-item-date">${dateStr}</div>
-        ${codeHtml}
-        ${actionHtml}
-      `;
-
-      walletList.appendChild(el);
+      authCreateBtn.disabled = true;
+      authCreateBtn.innerHTML = '<span class="btn-spinner"></span> Creating account...';
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        const niceName = email.split("@")[0];
+        try { await updateProfile(cred.user, { displayName: niceName }); } catch (e) { /* non-fatal */ }
+      } catch (err) {
+        console.error("Create account error:", err);
+        showAuthError(friendlyAuthError(err));
+      } finally {
+        authCreateBtn.disabled = false;
+        authCreateBtn.textContent = "Create an Account";
+      }
     });
 
-    // Wire up generate buttons
-    walletList.querySelectorAll(".wallet-generate-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const itemId = btn.getAttribute("data-id");
-        generateCodeForWalletItem(itemId, btn);
-      });
+    logoutBtn.addEventListener("click", async () => {
+      accountDropdown.classList.add("hidden");
+      try {
+        await signOut(auth);
+      } catch (err) {
+        console.error("Sign out error:", err);
+      }
     });
 
-    // Wire up verify buttons: user must type the 6-digit code that was
-    // emailed to them before it's revealed nicely on screen.
-    walletList.querySelectorAll(".verify-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const itemId = btn.getAttribute("data-id");
-        const input = walletList.querySelector(`.verify-input[data-id="${itemId}"]`);
-        verifyWalletItemCode(itemId, input ? input.value : "");
-      });
-    });
-    walletList.querySelectorAll(".verify-input").forEach((input) => {
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          const itemId = input.getAttribute("data-id");
-          verifyWalletItemCode(itemId, input.value);
+    // ---------------- Firestore: per-user wallet ----------------
+    function walletCollectionRef() {
+      return collection(db, "wallets", currentUser.uid, "items");
+    }
+
+    async function loadWallet() {
+      wallet = [];
+      try {
+        const snap = await getDocs(walletCollectionRef());
+        wallet = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        wallet.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      } catch (e) {
+        console.error("Failed to load wallet:", e);
+        wallet = [];
+      }
+    }
+
+    async function saveWalletItem(item) {
+      const { id, ...data } = item;
+      await setDoc(doc(walletCollectionRef(), id), data);
+    }
+
+    async function deleteWalletItemDoc(id) {
+      await deleteDoc(doc(walletCollectionRef(), id));
+    }
+
+    function generateRandomCode() {
+      return String(Math.floor(100000 + Math.random() * 900000));
+    }
+
+    // ---------------- Firestore: shared card-number stock pool ----------------
+    // Real 12-digit card numbers live in data.js (CONFIG.CARDS[].cardNumbers).
+    // "usedCardNumbers" collection in Firestore tracks which ones have
+    // already been handed out — shared across every user/device, so the
+    // same number is never given to two different people.
+    async function isCardNumberUsed(number) {
+      const snap = await getDoc(doc(db, "usedCardNumbers", number));
+      return snap.exists();
+    }
+    async function markCardNumberUsed(number) {
+      await setDoc(doc(db, "usedCardNumbers", number), { usedAt: new Date().toISOString() });
+    }
+    async function releaseCardNumber(number) {
+      if (!number) return;
+      try {
+        await deleteDoc(doc(db, "usedCardNumbers", number));
+      } catch (e) {
+        console.error("Failed to release card number:", e);
+      }
+    }
+    async function pickCardNumberForCard(cardId) {
+      const cardDef = CONFIG.CARDS.find((c) => c.id === cardId);
+      if (!cardDef || !Array.isArray(cardDef.cardNumbers)) return null;
+
+      for (const number of cardDef.cardNumbers) {
+        const used = await isCardNumberUsed(number);
+        if (!used) {
+          await markCardNumberUsed(number);
+          return number;
         }
+      }
+      return null; // pool is out of stock
+    }
+
+    // ---------------- Render: card grid ----------------
+    function renderCardGrid() {
+      cardGrid.innerHTML = "";
+      CONFIG.CARDS.forEach((card) => {
+        const btn = document.createElement("div");
+        btn.className = "recharge-card";
+        btn.innerHTML = `
+          <div class="icon">💳</div>
+          <div class="amount">${card.label}</div>
+        `;
+        btn.addEventListener("click", () => selectCard(card));
+        cardGrid.appendChild(btn);
       });
+    }
+
+    function selectCard(card) {
+      selectedCard = card;
+      selectedAmountLabel.textContent = card.label;
+      walletView.classList.add("hidden");
+      dashboardView.classList.add("hidden");
+      selectedView.classList.remove("hidden");
+    }
+
+    backBtn.addEventListener("click", () => {
+      selectedView.classList.add("hidden");
+      dashboardView.classList.remove("hidden");
+      selectedCard = null;
     });
 
-    // Wire up reset buttons: clears the code/status back to a fresh
-    // pending state with a new amount/code cycle (does not delete the item).
-    walletList.querySelectorAll(".wallet-reset-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const itemId = btn.getAttribute("data-id");
-        resetWalletItem(itemId);
-      });
+    // ---------------- Buy flow ----------------
+    buyBtn.addEventListener("click", async () => {
+      if (!selectedCard || !currentUser) return;
+
+      buyBtn.disabled = true;
+      const originalLabel = buyBtn.textContent;
+      buyBtn.innerHTML = '<span class="btn-spinner"></span> Adding...';
+
+      const item = {
+        id: "wi_" + Date.now(),
+        cardId: selectedCard.id,
+        label: selectedCard.label,
+        amount: selectedCard.amount,
+        code: null,
+        cardNumber: null,
+        verified: false,
+        status: "pending", // pending -> sent
+        createdAt: new Date().toISOString()
+      };
+
+      try {
+        await saveWalletItem(item);
+        wallet.unshift(item);
+
+        alert(selectedCard.label + " added to your wallet!");
+
+        selectedView.classList.add("hidden");
+        dashboardView.classList.add("hidden");
+        walletView.classList.remove("hidden");
+        selectedCard = null;
+        renderWallet();
+      } catch (err) {
+        console.error("Failed to add to wallet:", err);
+        alert("Couldn't add this to your wallet right now. Please try again.");
+      } finally {
+        buyBtn.disabled = false;
+        buyBtn.textContent = originalLabel;
+      }
     });
 
-    // Wire up delete buttons: removes the item from the wallet entirely.
-    walletList.querySelectorAll(".wallet-delete-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const itemId = btn.getAttribute("data-id");
-        deleteWalletItem(itemId);
-      });
+    // ---------------- Wallet view ----------------
+    walletNavBtn.addEventListener("click", async () => {
+      dashboardView.classList.add("hidden");
+      selectedView.classList.add("hidden");
+      walletView.classList.remove("hidden");
+      await loadWallet();
+      renderWallet();
     });
-  }
 
-  function deleteWalletItem(itemId) {
-    const item = wallet.find((w) => w.id === itemId);
-    if (!item) return;
+    walletBackBtn.addEventListener("click", () => {
+      walletView.classList.add("hidden");
+      dashboardView.classList.remove("hidden");
+    });
 
-    const ok = confirm("Delete this " + (item.amount ? item.amount + " LKR" : item.label) + " request from your wallet? This cannot be undone.");
-    if (!ok) return;
+    function renderWallet() {
+      walletList.innerHTML = "";
 
-    // If a real card number had already been allocated, release it back
-    // to the stock pool so it isn't wasted.
-    releaseCardNumber(item.cardNumber);
+      if (wallet.length === 0) {
+        walletList.innerHTML = '<div class="wallet-empty">No purchases yet. Buy a recharge card to get started.</div>';
+        return;
+      }
 
-    wallet = wallet.filter((w) => w.id !== itemId);
-    saveWallet();
-    renderWallet();
-  }
+      wallet.forEach((item) => {
+        const el = document.createElement("div");
+        el.className = "wallet-item";
 
-  function verifyWalletItemCode(itemId, enteredValue) {
-    const item = wallet.find((w) => w.id === itemId);
-    if (!item) return;
+        const dateStr = new Date(item.createdAt).toLocaleString();
+        const statusClass = item.status === "sent" ? "sent" : "pending";
+        const statusLabel = item.status === "sent" ? "Sent" : "Pending";
+        const amountText = item.amount ? `${item.amount} LKR` : item.label;
 
-    const entered = (enteredValue || "").trim();
-    if (entered.length !== 6 || !/^\d{6}$/.test(entered)) {
-      alert("Please enter the 6-digit code that was sent to your email.");
-      return;
+        let codeHtml = "";
+        let actionHtml = "";
+
+        if (item.status === "sent" && item.code && item.verified) {
+          // Code has been verified by the user — reveal the real card number
+          // with a smooth "burst" pop animation instead of just printing it.
+          const revealNumber = item.cardNumber || item.code;
+          const sparks = Array.from({ length: 10 })
+            .map((_, i) => {
+              const angle = (360 / 10) * i;
+              const dist = 50 + Math.random() * 20;
+              const dx = Math.round(Math.cos((angle * Math.PI) / 180) * dist);
+              const dy = Math.round(Math.sin((angle * Math.PI) / 180) * dist);
+              return `<span class="burst-spark" style="--dx:${dx}px; --dy:${dy}px; animation-delay:${(i * 0.02).toFixed(2)}s;"></span>`;
+            })
+            .join("");
+          codeHtml = `
+            <div class="wallet-item-code-wrap">
+              <span class="burst-ring"></span>
+              ${sparks}
+              <div class="wallet-item-code">${revealNumber}</div>
+            </div>
+          `;
+          actionHtml = `
+            <div class="wallet-row-actions">
+              <button class="wallet-contact-btn" data-id="${item.id}">📲 Contact for Payment</button>
+            </div>
+            <div class="wallet-row-actions" style="margin-top:8px;">
+              <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
+              <button class="wallet-delete-btn" data-id="${item.id}">🗑 Delete</button>
+            </div>
+          `;
+        } else if (item.status === "sent" && item.code && !item.verified) {
+          // Code already requested but not yet shown — user must enter the
+          // 6-digit code (emailed to them) to reveal the real card number.
+          codeHtml = `
+            <div class="hint" style="margin-top:0; margin-bottom:10px;">A 6-digit code was sent to your email. Enter it below to reveal it here.</div>
+            <div class="verify-row">
+              <input type="text" inputmode="numeric" maxlength="6" class="verify-input" data-id="${item.id}" placeholder="Enter your 6-digit code" />
+              <button class="verify-btn" data-id="${item.id}">Get your recharge card</button>
+            </div>
+          `;
+          actionHtml = `
+            <div class="wallet-row-actions" style="margin-top:10px;">
+              <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
+              <button class="wallet-delete-btn" data-id="${item.id}">🗑 Delete</button>
+            </div>
+          `;
+        } else {
+          actionHtml = `
+            <div class="wallet-row-actions">
+              <button class="wallet-generate-btn" data-id="${item.id}" style="flex:1;">Generate Code</button>
+              <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
+              <button class="wallet-delete-btn" data-id="${item.id}">🗑 Delete</button>
+            </div>
+          `;
+        }
+
+        el.innerHTML = `
+          <div class="wallet-item-top">
+            <div class="wallet-item-amount">${amountText}</div>
+            <div class="wallet-item-status ${statusClass}">${statusLabel}</div>
+          </div>
+          <div class="wallet-item-date">${dateStr}</div>
+          ${codeHtml}
+          ${actionHtml}
+        `;
+
+        walletList.appendChild(el);
+      });
+
+      // Wire up generate buttons
+      walletList.querySelectorAll(".wallet-generate-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const itemId = btn.getAttribute("data-id");
+          generateCodeForWalletItem(itemId, btn);
+        });
+      });
+
+      // Wire up verify buttons: user must type the 6-digit code that was
+      // emailed to them before it's revealed nicely on screen.
+      walletList.querySelectorAll(".verify-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const itemId = btn.getAttribute("data-id");
+          const input = walletList.querySelector(`.verify-input[data-id="${itemId}"]`);
+          verifyWalletItemCode(itemId, input ? input.value : "");
+        });
+      });
+      walletList.querySelectorAll(".verify-input").forEach((input) => {
+        input.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            const itemId = input.getAttribute("data-id");
+            verifyWalletItemCode(itemId, input.value);
+          }
+        });
+      });
+
+      // Wire up reset buttons
+      walletList.querySelectorAll(".wallet-reset-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const itemId = btn.getAttribute("data-id");
+          resetWalletItem(itemId);
+        });
+      });
+
+      // Wire up delete buttons
+      walletList.querySelectorAll(".wallet-delete-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const itemId = btn.getAttribute("data-id");
+          deleteWalletItem(itemId);
+        });
+      });
+
+      // Wire up "Contact for Payment" buttons
+      walletList.querySelectorAll(".wallet-contact-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const itemId = btn.getAttribute("data-id");
+          contactOwnerForPayment(itemId);
+        });
+      });
     }
 
-    if (entered !== item.code) {
-      alert("That code doesn't match. Please check your email and try again.");
-      return;
+    function contactOwnerForPayment(itemId) {
+      const item = wallet.find((w) => w.id === itemId);
+      if (!item) return;
+
+      const waNumber = "94" + CONFIG.WHATSAPP_NUMBER.replace(/^0/, "");
+      const waMessage = encodeURIComponent(
+        "Hi, I'd like to complete payment for my " + item.label +
+          " recharge card. Please confirm and send me the payment details."
+      );
+      window.open("https://wa.me/" + waNumber + "?text=" + waMessage, "_blank");
     }
 
-    item.verified = true;
-    saveWallet();
-    renderWallet();
-  }
+    async function resetWalletItem(itemId) {
+      const item = wallet.find((w) => w.id === itemId);
+      if (!item) return;
 
-  function releaseCardNumber(number) {
-    if (!number) return;
-    const used = getUsedCardNumbers();
-    const idx = used.indexOf(number);
-    if (idx !== -1) {
-      used.splice(idx, 1);
-      localStorage.setItem(getUsedCardNumbersKey(), JSON.stringify(used));
-    }
-  }
+      const ok = confirm("Reset this " + (item.amount ? item.amount + " LKR" : item.label) + " request? The current code will be cleared and it will go back to pending.");
+      if (!ok) return;
 
-  function resetWalletItem(itemId) {
-    const item = wallet.find((w) => w.id === itemId);
-    if (!item) return;
+      await releaseCardNumber(item.cardNumber);
 
-    const ok = confirm("Reset this " + (item.amount ? item.amount + " LKR" : item.label) + " request? The current code will be cleared and it will go back to pending.");
-    if (!ok) return;
+      item.cardNumber = null;
+      item.code = null;
+      item.verified = false;
+      item.status = "pending";
+      item.createdAt = new Date().toISOString();
 
-    releaseCardNumber(item.cardNumber);
-    item.cardNumber = null;
-    item.code = null;
-    item.verified = false;
-    item.status = "pending";
-    item.createdAt = new Date().toISOString();
-    saveWallet();
-    renderWallet();
-  }
-
-  function generateCodeForWalletItem(itemId, btnEl) {
-    const item = wallet.find((w) => w.id === itemId);
-    if (!item) return;
-
-    if (!window.emailjs) {
-      alert("Email service is not available right now. Please try again later.");
-      return;
+      try {
+        await saveWalletItem(item);
+        renderWallet();
+      } catch (err) {
+        console.error("Failed to reset item:", err);
+        alert("Couldn't reset this item right now. Please try again.");
+      }
     }
 
-    const code = generateRandomCode();
-    const cardNumber = pickCardNumberForCard(item.cardId);
+    async function deleteWalletItem(itemId) {
+      const item = wallet.find((w) => w.id === itemId);
+      if (!item) return;
 
-    if (!cardNumber) {
-      alert("Sorry, all " + item.label + " card numbers are currently out of stock. Please contact the owner on WhatsApp.");
-      return;
+      const ok = confirm("Delete this " + (item.amount ? item.amount + " LKR" : item.label) + " request from your wallet? This cannot be undone.");
+      if (!ok) return;
+
+      try {
+        await releaseCardNumber(item.cardNumber);
+        await deleteWalletItemDoc(itemId);
+        wallet = wallet.filter((w) => w.id !== itemId);
+        renderWallet();
+      } catch (err) {
+        console.error("Failed to delete item:", err);
+        alert("Couldn't delete this item right now. Please try again.");
+      }
     }
 
-    if (btnEl) {
-      btnEl.disabled = true;
-      btnEl.innerHTML = '<span class="btn-spinner"></span> Sending...';
+    async function verifyWalletItemCode(itemId, enteredValue) {
+      const item = wallet.find((w) => w.id === itemId);
+      if (!item) return;
+
+      const entered = (enteredValue || "").trim();
+      if (entered.length !== 6 || !/^\d{6}$/.test(entered)) {
+        alert("Please enter the 6-digit code that was sent to your email.");
+        return;
+      }
+      if (entered !== item.code) {
+        alert("That code doesn't match. Please check your email and try again.");
+        return;
+      }
+
+      item.verified = true;
+      try {
+        await saveWalletItem(item);
+        renderWallet();
+      } catch (err) {
+        console.error("Failed to verify item:", err);
+        alert("Couldn't verify this code right now. Please try again.");
+      }
     }
 
-    // Full-screen flower-spinner while we wait for EmailJS to actually
-    // send the code — makes the "code is on its way" wait visible.
-    authLoader.classList.remove("hidden");
+    async function generateCodeForWalletItem(itemId, btnEl) {
+      const item = wallet.find((w) => w.id === itemId);
+      if (!item) return;
 
-    const templateParams = {
-      user_name: currentUser ? currentUser.name : "Unknown User",
-      user_email: currentUser ? currentUser.email : "Unknown",
-      selected_card: item.label,
-      payment_code: code
-    };
+      if (!window.emailjs) {
+        alert("Email service is not available right now. Please try again later.");
+        return;
+      }
 
-    emailjs
-      .send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, templateParams)
-      .then(() => {
+      const code = generateRandomCode();
+
+      if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.innerHTML = '<span class="btn-spinner"></span> Sending...';
+      }
+      authLoader.classList.remove("hidden");
+
+      let cardNumber;
+      try {
+        cardNumber = await pickCardNumberForCard(item.cardId);
+      } catch (err) {
+        console.error("Failed to pick a card number:", err);
+        cardNumber = null;
+      }
+
+      if (!cardNumber) {
+        authLoader.classList.add("hidden");
+        if (btnEl) {
+          btnEl.disabled = false;
+          btnEl.textContent = "Generate Code";
+        }
+        alert("Sorry, all " + item.label + " card numbers are currently out of stock. Please contact the owner on WhatsApp.");
+        return;
+      }
+
+      const templateParams = {
+        user_name: currentUser ? currentUser.name : "Unknown User",
+        user_email: currentUser ? currentUser.email : "Unknown",
+        selected_card: item.label,
+        payment_code: code
+      };
+
+      try {
+        await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, templateParams);
+
         item.code = code;
         item.cardNumber = cardNumber;
         item.verified = false;
         item.status = "sent";
-        saveWallet();
+        await saveWalletItem(item);
         renderWallet();
         authLoader.classList.add("hidden");
 
@@ -1079,158 +1410,84 @@
             "You'll now be redirected to WhatsApp to contact the owner about your payment."
         );
 
-        // Build a WhatsApp deep link with a pre-filled message and open it.
-        // NOTE: the 6-digit code is never included here — it's only ever
-        // sent to the user's email. WhatsApp is just to contact the owner
-        // about completing the payment.
+        // WhatsApp is only to contact the owner about payment — the code
+        // itself is never included here, it only ever goes to email.
         const waNumber = "94" + CONFIG.WHATSAPP_NUMBER.replace(/^0/, "");
         const waMessage = encodeURIComponent(
           "Hi, I just requested a " + item.label +
             " recharge. Please confirm my payment so I can receive my card."
         );
         window.open("https://wa.me/" + waNumber + "?text=" + waMessage, "_blank");
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("EmailJS send error:", err);
         authLoader.classList.add("hidden");
+        await releaseCardNumber(cardNumber); // don't waste the number if email failed
         const detail = (err && (err.text || err.message)) || "Unknown error";
         alert("Failed to send the request: " + detail);
         if (btnEl) {
           btnEl.disabled = false;
           btnEl.textContent = "Generate Code";
         }
-      });
-  }
-
-  // ---------------- Account dropdown ----------------
-  accountBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    accountDropdown.classList.toggle("hidden");
-  });
-
-  document.addEventListener("click", (e) => {
-    if (!accountDropdown.contains(e.target) && e.target !== accountBtn) {
-      accountDropdown.classList.add("hidden");
-    }
-  });
-
-  logoutBtn.addEventListener("click", () => {
-    localStorage.removeItem(CONFIG.STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(CONFIG.STORAGE_KEYS.USER);
-    currentUser = null;
-    wallet = [];
-    accountDropdown.classList.add("hidden");
-    showLoginScreen();
-  });
-
-  // ---------------- Screen switching ----------------
-  function showLoginScreen() {
-    bootLoader.classList.add("hidden");
-    authLoader.classList.add("hidden");
-    appScreen.classList.add("hidden");
-    loginScreen.classList.remove("hidden");
-    initGoogleSignIn();
-  }
-
-  function showAppScreen() {
-    bootLoader.classList.add("hidden");
-    authLoader.classList.add("hidden");
-    loginScreen.classList.add("hidden");
-    appScreen.classList.remove("hidden");
-    dashboardView.classList.remove("hidden");
-    selectedView.classList.add("hidden");
-    walletView.classList.add("hidden");
-    userNameLabel.textContent = currentUser
-      ? `${currentUser.name}\n${currentUser.email}`
-      : "—";
-    // Always reload wallet fresh for the currently signed-in account,
-    // so a different user never sees a previous account's pending list.
-    loadWallet();
-    renderCardGrid();
-    renderWallet();
-  }
-
-  // ---------------- Google Sign-In ----------------
-  function handleCredentialResponse(response) {
-    const token = response.credential;
-    const payload = decodeJwt(token);
-
-    if (!payload) {
-      alert("Sign-in failed. Please try again.");
-      return;
-    }
-
-    // Show the flower-spinner immediately on the sign-in (single) page
-    // while we switch accounts and load that account's data.
-    loginScreen.classList.add("hidden");
-    authLoader.classList.remove("hidden");
-
-    currentUser = {
-      name: payload.name || payload.email || "User",
-      email: payload.email || ""
-    };
-
-    localStorage.setItem(CONFIG.STORAGE_KEYS.TOKEN, token);
-    localStorage.setItem(CONFIG.STORAGE_KEYS.USER, JSON.stringify(currentUser));
-
-    // Small delay so the spinner is actually perceivable, then route in.
-    setTimeout(() => {
-      showAppScreen();
-    }, 500);
-  }
-
-  function initGoogleSignIn(attempt) {
-    attempt = attempt || 0;
-
-    if (!window.google || !google.accounts || !google.accounts.id) {
-      if (attempt > 20) {
-        console.error("Google Sign-In script failed to load.");
-        return;
       }
-      setTimeout(() => initGoogleSignIn(attempt + 1), 300);
-      return;
     }
 
-    google.accounts.id.initialize({
-      client_id: CONFIG.GOOGLE_CLIENT_ID,
-      callback: handleCredentialResponse,
-      auto_select: false
+    // ---------------- Account dropdown ----------------
+    accountBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      accountDropdown.classList.toggle("hidden");
     });
 
-    const btnContainer = document.getElementById("googleSignInBtn");
-    btnContainer.innerHTML = "";
-    google.accounts.id.renderButton(btnContainer, {
-      theme: "filled_blue",
-      size: "large",
-      shape: "pill",
-      text: "signin_with",
-      width: 280
-    });
-  }
-
-  // ---------------- Boot ----------------
-  function boot() {
-    const savedToken = localStorage.getItem(CONFIG.STORAGE_KEYS.TOKEN);
-    const savedUser = localStorage.getItem(CONFIG.STORAGE_KEYS.USER);
-
-    // Keep the flower-spinner visible briefly so the loading state
-    // is actually perceivable, then route to the right screen.
-    setTimeout(() => {
-      if (savedToken && savedUser) {
-        try {
-          currentUser = JSON.parse(savedUser);
-          showAppScreen();
-          return;
-        } catch (e) {
-          // fall through to login
-        }
+    document.addEventListener("click", (e) => {
+      if (!accountDropdown.contains(e.target) && e.target !== accountBtn) {
+        accountDropdown.classList.add("hidden");
       }
-      showLoginScreen();
-    }, 600);
-  }
+    });
 
-  boot();
-})();
+    // ---------------- Screen switching ----------------
+    function showLoginScreen() {
+      bootLoader.classList.add("hidden");
+      authLoader.classList.add("hidden");
+      appScreen.classList.add("hidden");
+      loginScreen.classList.remove("hidden");
+      clearAuthError();
+      authEmail.value = "";
+      authPassword.value = "";
+    }
+
+    async function showAppScreen() {
+      bootLoader.classList.add("hidden");
+      loginScreen.classList.add("hidden");
+      appScreen.classList.remove("hidden");
+      dashboardView.classList.remove("hidden");
+      selectedView.classList.add("hidden");
+      walletView.classList.add("hidden");
+      userNameLabel.textContent = currentUser
+        ? `${currentUser.name}\n${currentUser.email}`
+        : "—";
+      renderCardGrid();
+
+      await loadWallet();
+      renderWallet();
+
+      authLoader.classList.add("hidden");
+    }
+
+    // ---------------- Firebase auth state (drives the whole app) ----------------
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = {
+          uid: user.uid,
+          name: user.displayName || (user.email ? user.email.split("@")[0] : "User"),
+          email: user.email || ""
+        };
+        await showAppScreen();
+      } else {
+        currentUser = null;
+        wallet = [];
+        showLoginScreen();
+      }
+    });
+  })();
 </script>
 </body>
 </html>
