@@ -972,6 +972,24 @@
             </form>
           </div>
 
+          <!-- ---- EMAIL VERIFICATION PANEL ---- -->
+          <div class="auth-panel hidden" id="verifyPanel">
+            <div class="success-burst" style="background: rgba(59,130,246,0.12);">
+              <svg viewBox="0 0 24 24" fill="none" style="width:30px;height:30px;">
+                <path d="M3 6l9 7 9-7" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <rect x="3" y="5" width="18" height="14" rx="2" stroke="#3b82f6" stroke-width="2"/>
+              </svg>
+            </div>
+            <p class="hint" style="margin-top:0; margin-bottom:16px;">
+              We sent a verification link to <strong id="verifyEmailLabel">your email</strong>. Open it, tap the link, then come back and press the button below.
+            </p>
+            <div id="verifyError" class="auth-error"></div>
+            <div id="verifySuccess" class="auth-success"></div>
+            <button type="button" id="checkVerifiedBtn" class="auth-primary-btn">I've verified — Continue</button>
+            <button type="button" id="resendVerifyBtn" class="auth-secondary-btn">Resend email</button>
+            <button type="button" id="useOtherAccountBtn" class="auth-secondary-btn" style="margin-top:8px;">Use a different account</button>
+          </div>
+
         </div>
 
         <p class="hint" style="margin-top:14px;">Secured by Firebase Authentication — works from any device.</p>
@@ -1040,7 +1058,8 @@
   import {
     getAuth, GoogleAuthProvider, signInWithPopup,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
-    onAuthStateChanged, signOut, updateProfile
+    onAuthStateChanged, signOut, updateProfile,
+    sendEmailVerification, reload
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
   import {
     getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc
@@ -1116,6 +1135,16 @@
     const signUpSuccess = document.getElementById("signUpSuccess");
     const signUpBtn = document.getElementById("signUpBtn");
     const backToSignInBtn = document.getElementById("backToSignInBtn");
+
+    const verifyPanel = document.getElementById("verifyPanel");
+    const verifyEmailLabel = document.getElementById("verifyEmailLabel");
+    const verifyError = document.getElementById("verifyError");
+    const verifySuccess = document.getElementById("verifySuccess");
+    const checkVerifiedBtn = document.getElementById("checkVerifiedBtn");
+    const resendVerifyBtn = document.getElementById("resendVerifyBtn");
+    const useOtherAccountBtn = document.getElementById("useOtherAccountBtn");
+
+    let pendingVerifyUser = null; // Firebase user object awaiting email verification
 
     // ---------------- Init EmailJS ----------------
     if (window.emailjs) {
@@ -1218,19 +1247,7 @@
       authHeading.textContent = "Create your account";
       authSubtitle.textContent = "Sign up to start buying recharge cards";
 
-      signInPanel.classList.add("slide-out-left");
-      signInPanel.addEventListener("animationend", function handler() {
-        signInPanel.removeEventListener("animationend", handler);
-        signInPanel.classList.add("hidden");
-        signInPanel.classList.remove("slide-out-left");
-
-        signUpPanel.classList.remove("hidden");
-        signUpPanel.classList.add("slide-in-right");
-        signUpPanel.addEventListener("animationend", function h2() {
-          signUpPanel.removeEventListener("animationend", h2);
-          signUpPanel.classList.remove("slide-in-right");
-        });
-      });
+      slidePanels(signInPanel, signUpPanel, "forward");
 
       suEmail.value = authEmail.value.trim();
       suPassword.value = "";
@@ -1248,22 +1265,12 @@
       authHeading.textContent = "Digital Recharge";
       authSubtitle.textContent = "Sign in to continue to your dashboard";
 
-      signUpPanel.classList.add("slide-out-right");
-      signUpPanel.addEventListener("animationend", function handler() {
-        signUpPanel.removeEventListener("animationend", handler);
-        signUpPanel.classList.add("hidden");
-        signUpPanel.classList.remove("slide-out-right");
-
-        signInPanel.classList.remove("hidden");
-        signInPanel.classList.add("slide-in-left");
-        signInPanel.addEventListener("animationend", function h2() {
-          signInPanel.removeEventListener("animationend", h2);
-          signInPanel.classList.remove("slide-in-left");
-        });
-      });
+      const fromPanel = verifyPanel.classList.contains("hidden") ? signUpPanel : verifyPanel;
+      slidePanels(fromPanel, signInPanel, "back");
 
       clearAuthError();
       authPassword.value = "";
+      pendingVerifyUser = null;
     }
 
     authCreateBtn.addEventListener("click", goToSignUp);
@@ -1323,7 +1330,52 @@
     suPassword.addEventListener("input", () => { updateStrength(); updateMatchHint(); });
     suConfirm.addEventListener("input", updateMatchHint);
 
-    // ---------------- Sign Up submit ----------------
+    function slidePanels(fromPanel, toPanel, dir) {
+      // dir: "forward" slides left->right entry, "back" slides right->left entry
+      const outClass = dir === "forward" ? "slide-out-left" : "slide-out-right";
+      const inClass = dir === "forward" ? "slide-in-right" : "slide-in-left";
+
+      fromPanel.classList.add(outClass);
+      fromPanel.addEventListener("animationend", function handler() {
+        fromPanel.removeEventListener("animationend", handler);
+        fromPanel.classList.add("hidden");
+        fromPanel.classList.remove(outClass);
+
+        toPanel.classList.remove("hidden");
+        toPanel.classList.add(inClass);
+        toPanel.addEventListener("animationend", function h2() {
+          toPanel.removeEventListener("animationend", h2);
+          toPanel.classList.remove(inClass);
+        });
+      });
+    }
+
+    function goToVerify(user) {
+      pendingVerifyUser = user;
+      authHeading.textContent = "Verify your email";
+      authSubtitle.textContent = "One last step to secure your account";
+      verifyEmailLabel.textContent = user.email || "your email";
+      verifyError.classList.remove("show");
+      verifySuccess.classList.remove("show");
+      checkVerifiedBtn.disabled = false;
+      checkVerifiedBtn.textContent = "I've verified — Continue";
+
+      const fromPanel = !signUpPanel.classList.contains("hidden")
+        ? signUpPanel
+        : (!signInPanel.classList.contains("hidden") ? signInPanel : null);
+
+      if (fromPanel) {
+        slidePanels(fromPanel, verifyPanel, "forward");
+      } else {
+        // No panel currently visible to animate from (e.g. straight from
+        // a fresh page load) — just show it directly.
+        signInPanel.classList.add("hidden");
+        signUpPanel.classList.add("hidden");
+        verifyPanel.classList.remove("hidden");
+      }
+    }
+
+    // ---------------- Sign Up submit: create the account, then send a verification email ----------------
     signUpForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       clearSignUpError();
@@ -1358,16 +1410,84 @@
         const niceName = email.split("@")[0];
         try { await updateProfile(cred.user, { displayName: niceName }); } catch (e) { /* non-fatal */ }
 
-        showSignUpSuccess("✓ Account created! Taking you to your dashboard...");
-        signUpBtn.innerHTML = "Account Created";
-        // onAuthStateChanged will switch screens automatically.
+        await sendEmailVerification(cred.user);
+        showSignUpSuccess("✓ Account created! Check your email to verify it.");
+        goToVerify(cred.user);
       } catch (err) {
         console.error("Create account error:", err);
         showSignUpError(friendlyAuthError(err));
         if (err && err.code === "auth/email-already-in-use") flashFieldError(suEmail);
+      } finally {
         signUpBtn.disabled = false;
         signUpBtn.textContent = "Create Account";
       }
+    });
+
+    // ---------------- "I've verified — Continue": reload user, check emailVerified ----------------
+    checkVerifiedBtn.addEventListener("click", async () => {
+      verifyError.classList.remove("show");
+      verifySuccess.classList.remove("show");
+
+      const user = pendingVerifyUser || auth.currentUser;
+      if (!user) {
+        verifyError.textContent = "Session expired. Please sign up again.";
+        verifyError.classList.add("show");
+        return;
+      }
+
+      checkVerifiedBtn.disabled = true;
+      checkVerifiedBtn.innerHTML = '<span class="btn-spinner"></span> Checking...';
+      try {
+        await reload(user);
+        if (user.emailVerified) {
+          verifySuccess.textContent = "✓ Email verified! Taking you to your dashboard...";
+          verifySuccess.classList.add("show");
+          checkVerifiedBtn.textContent = "Verified";
+          pendingVerifyUser = null;
+          // onAuthStateChanged will fire / app screen check picks this up.
+          await showAppScreen();
+        } else {
+          verifyError.textContent = "Not verified yet. Please open the link in the email we sent you, then try again.";
+          verifyError.classList.add("show");
+          checkVerifiedBtn.disabled = false;
+          checkVerifiedBtn.textContent = "I've verified — Continue";
+        }
+      } catch (err) {
+        console.error("Failed to check verification status:", err);
+        verifyError.textContent = "Couldn't check verification status. Please try again.";
+        verifyError.classList.add("show");
+        checkVerifiedBtn.disabled = false;
+        checkVerifiedBtn.textContent = "I've verified — Continue";
+      }
+    });
+
+    resendVerifyBtn.addEventListener("click", async () => {
+      const user = pendingVerifyUser || auth.currentUser;
+      if (!user) return;
+
+      resendVerifyBtn.disabled = true;
+      const originalText = resendVerifyBtn.textContent;
+      resendVerifyBtn.innerHTML = '<span class="btn-spinner"></span> Resending...';
+      try {
+        await sendEmailVerification(user);
+        verifyError.classList.remove("show");
+        verifySuccess.textContent = "✓ A new verification email was sent.";
+        verifySuccess.classList.add("show");
+      } catch (err) {
+        console.error("Failed to resend verification email:", err);
+        verifySuccess.classList.remove("show");
+        verifyError.textContent = "Couldn't resend the email. Please try again shortly.";
+        verifyError.classList.add("show");
+      } finally {
+        resendVerifyBtn.disabled = false;
+        resendVerifyBtn.textContent = originalText;
+      }
+    });
+
+    useOtherAccountBtn.addEventListener("click", async () => {
+      pendingVerifyUser = null;
+      try { await signOut(auth); } catch (e) { /* non-fatal */ }
+      goToSignIn();
     });
 
     logoutBtn.addEventListener("click", async () => {
@@ -1832,12 +1952,15 @@
       // make sure we land back on the sign-in panel each time
       signUpPanel.classList.add("hidden");
       signUpPanel.classList.remove("slide-in-right", "slide-out-right");
+      verifyPanel.classList.add("hidden");
+      verifyPanel.classList.remove("slide-in-right", "slide-out-right", "slide-in-left", "slide-out-left");
       signInPanel.classList.remove("hidden");
       signInPanel.classList.remove("slide-out-left", "slide-in-left");
       authHeading.textContent = "Digital Recharge";
       authSubtitle.textContent = "Sign in to continue to your dashboard";
       signUpBtn.disabled = false;
       signUpBtn.textContent = "Create Account";
+      pendingVerifyUser = null;
     }
 
     async function showAppScreen() {
@@ -1861,6 +1984,19 @@
     // ---------------- Firebase auth state (drives the whole app) ----------------
     onAuthStateChanged(auth, async (user) => {
       if (user) {
+        // Google accounts are pre-verified by Google. Only email/password
+        // accounts need to pass the emailVerified gate.
+        const isPasswordAccount = user.providerData.some((p) => p.providerId === "password");
+        if (isPasswordAccount && !user.emailVerified) {
+          currentUser = null;
+          wallet = [];
+          bootLoader.classList.add("hidden");
+          appScreen.classList.add("hidden");
+          loginScreen.classList.remove("hidden");
+          goToVerify(user);
+          return;
+        }
+
         currentUser = {
           uid: user.uid,
           name: user.displayName || (user.email ? user.email.split("@")[0] : "User"),
