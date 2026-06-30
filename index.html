@@ -316,6 +316,111 @@
     .recharge-card .amount { font-size: 13px; }
     .selected-amount-display .value { font-size: 26px; }
   }
+
+  /* ---------- Buy button (selected card view) ---------- */
+  #buyBtn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  #buyBtn:hover { background: var(--accent-hover); }
+  #buyBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* ---------- Wallet nav button ---------- */
+  #walletNavBtn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  #walletNavBtn:hover { background: #273449; }
+
+  /* ---------- Wallet View ---------- */
+  .wallet-item {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+
+  .wallet-item:last-child { margin-bottom: 0; }
+
+  .wallet-item-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+
+  .wallet-item-amount {
+    font-size: 17px;
+    font-weight: 700;
+  }
+
+  .wallet-item-status {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .wallet-item-status.pending {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+  }
+
+  .wallet-item-status.sent {
+    background: rgba(74, 222, 128, 0.15);
+    color: #4ade80;
+  }
+
+  .wallet-item-date {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+  }
+
+  .wallet-item-code {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: #4ade80;
+    margin-bottom: 8px;
+  }
+
+  .wallet-generate-btn {
+    width: 100%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .wallet-generate-btn:hover { background: var(--accent-hover); }
+  .wallet-generate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .wallet-empty {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14px;
+    padding: 30px 10px;
+  }
 </style>
 </head>
 <body>
@@ -334,11 +439,14 @@
   <div id="appScreen" class="hidden">
     <header>
       <h2>Digital Recharge</h2>
-      <div class="account-wrap">
-        <button id="accountBtn">👤 Account ▾</button>
-        <div id="accountDropdown" class="hidden">
-          <div class="user-name" id="userNameLabel">—</div>
-          <button id="logoutBtn">Logout</button>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button id="walletNavBtn">🛒 Wallet</button>
+        <div class="account-wrap">
+          <button id="accountBtn">👤 Account ▾</button>
+          <div id="accountDropdown" class="hidden">
+            <div class="user-name" id="userNameLabel">—</div>
+            <button id="logoutBtn">Logout</button>
+          </div>
         </div>
       </div>
     </header>
@@ -362,13 +470,17 @@
               <div class="label">Selected Card</div>
               <div class="value" id="selectedAmountLabel">—</div>
             </div>
-            <button id="generateCodeBtn">Generate Code</button>
-            <p class="hint">You'll be asked to enter the 6-digit payment code from your transaction.</p>
+            <button id="buyBtn">Buy Now</button>
+            <p class="hint">This will be added to your wallet. You can generate the payment code from there.</p>
+          </div>
+        </div>
 
-            <div id="generatedCodeBox" class="generated-code-box hidden">
-              <div class="label">Your Payment Code</div>
-              <div class="value" id="generatedCodeValue">—</div>
-            </div>
+        <!-- ---- Wallet view ---- -->
+        <div id="walletView" class="hidden">
+          <button class="back-btn" id="walletBackBtn">← Back</button>
+          <div class="panel">
+            <h3>My Wallet</h3>
+            <div id="walletList"></div>
           </div>
         </div>
 
@@ -383,6 +495,7 @@
   // ---------------- State ----------------
   let currentUser = null;     // { name, email }
   let selectedCard = null;    // CONFIG.CARDS item
+  let wallet = [];            // [{ id, cardId, label, code, status, createdAt }]
 
   // ---------------- DOM refs ----------------
   const loginScreen = document.getElementById("loginScreen");
@@ -391,15 +504,17 @@
   const accountDropdown = document.getElementById("accountDropdown");
   const logoutBtn = document.getElementById("logoutBtn");
   const userNameLabel = document.getElementById("userNameLabel");
+  const walletNavBtn = document.getElementById("walletNavBtn");
 
   const dashboardView = document.getElementById("dashboardView");
   const selectedView = document.getElementById("selectedView");
+  const walletView = document.getElementById("walletView");
   const cardGrid = document.getElementById("cardGrid");
   const selectedAmountLabel = document.getElementById("selectedAmountLabel");
-  const generateCodeBtn = document.getElementById("generateCodeBtn");
+  const buyBtn = document.getElementById("buyBtn");
   const backBtn = document.getElementById("backBtn");
-  const generatedCodeBox = document.getElementById("generatedCodeBox");
-  const generatedCodeValue = document.getElementById("generatedCodeValue");
+  const walletBackBtn = document.getElementById("walletBackBtn");
+  const walletList = document.getElementById("walletList");
 
   // ---------------- Init EmailJS ----------------
   if (window.emailjs) {
@@ -424,6 +539,24 @@
     }
   }
 
+  // ---------------- Wallet storage helpers ----------------
+  function loadWallet() {
+    try {
+      const raw = localStorage.getItem(CONFIG.STORAGE_KEYS.WALLET);
+      wallet = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      wallet = [];
+    }
+  }
+
+  function saveWallet() {
+    localStorage.setItem(CONFIG.STORAGE_KEYS.WALLET, JSON.stringify(wallet));
+  }
+
+  function generateRandomCode() {
+    return String(Math.floor(100000 + Math.random() * 900000));
+  }
+
   // ---------------- Render: card grid ----------------
   function renderCardGrid() {
     cardGrid.innerHTML = "";
@@ -442,8 +575,7 @@
   function selectCard(card) {
     selectedCard = card;
     selectedAmountLabel.textContent = card.label;
-    generatedCodeBox.classList.add("hidden");
-    generatedCodeValue.textContent = "—";
+    walletView.classList.add("hidden");
     dashboardView.classList.add("hidden");
     selectedView.classList.remove("hidden");
   }
@@ -452,82 +584,148 @@
     selectedView.classList.add("hidden");
     dashboardView.classList.remove("hidden");
     selectedCard = null;
-    generatedCodeBox.classList.add("hidden");
-    generatedCodeValue.textContent = "—";
   });
 
-  // ---------------- Generate Code flow ----------------
-  generateCodeBtn.addEventListener("click", () => {
+  // ---------------- Buy flow ----------------
+  buyBtn.addEventListener("click", () => {
     if (!selectedCard) return;
 
-    const code = window.prompt("Enter the 6-digit payment code:");
+    const item = {
+      id: "wi_" + Date.now(),
+      cardId: selectedCard.id,
+      label: selectedCard.label,
+      code: null,
+      status: "pending", // pending -> sent
+      createdAt: new Date().toISOString()
+    };
 
-    if (code === null) return; // user cancelled
+    wallet.unshift(item);
+    saveWallet();
 
-    const trimmed = code.trim();
-    const isValid = /^\d{6}$/.test(trimmed);
+    alert(selectedCard.label + " added to your wallet!");
 
-    if (!isValid) {
-      alert("Invalid code. Please enter exactly 6 digits.");
+    // Navigate to wallet view
+    selectedView.classList.add("hidden");
+    dashboardView.classList.add("hidden");
+    walletView.classList.remove("hidden");
+    selectedCard = null;
+    renderWallet();
+  });
+
+  // ---------------- Wallet view ----------------
+  walletNavBtn.addEventListener("click", () => {
+    dashboardView.classList.add("hidden");
+    selectedView.classList.add("hidden");
+    walletView.classList.remove("hidden");
+    renderWallet();
+  });
+
+  walletBackBtn.addEventListener("click", () => {
+    walletView.classList.add("hidden");
+    dashboardView.classList.remove("hidden");
+  });
+
+  function renderWallet() {
+    walletList.innerHTML = "";
+
+    if (wallet.length === 0) {
+      walletList.innerHTML = '<div class="wallet-empty">No purchases yet. Buy a recharge card to get started.</div>';
       return;
     }
 
-    // Show the code on screen immediately
-    generatedCodeValue.textContent = trimmed;
-    generatedCodeBox.classList.remove("hidden");
+    wallet.forEach((item) => {
+      const el = document.createElement("div");
+      el.className = "wallet-item";
 
-    sendRequestEmail(trimmed);
-  });
+      const dateStr = new Date(item.createdAt).toLocaleString();
+      const statusClass = item.status === "sent" ? "sent" : "pending";
+      const statusLabel = item.status === "sent" ? "Sent" : "Pending";
 
-  function sendRequestEmail(paymentCode) {
+      let codeHtml = "";
+      let actionHtml = "";
+
+      if (item.status === "sent" && item.code) {
+        codeHtml = `<div class="wallet-item-code">${item.code}</div>`;
+        actionHtml = `<div class="hint" style="margin-top:0;">Code sent to owner via email & WhatsApp.</div>`;
+      } else {
+        actionHtml = `<button class="wallet-generate-btn" data-id="${item.id}">Generate Code</button>`;
+      }
+
+      el.innerHTML = `
+        <div class="wallet-item-top">
+          <div class="wallet-item-amount">${item.label}</div>
+          <div class="wallet-item-status ${statusClass}">${statusLabel}</div>
+        </div>
+        <div class="wallet-item-date">${dateStr}</div>
+        ${codeHtml}
+        ${actionHtml}
+      `;
+
+      walletList.appendChild(el);
+    });
+
+    // Wire up generate buttons
+    walletList.querySelectorAll(".wallet-generate-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const itemId = btn.getAttribute("data-id");
+        generateCodeForWalletItem(itemId, btn);
+      });
+    });
+  }
+
+  function generateCodeForWalletItem(itemId, btnEl) {
+    const item = wallet.find((w) => w.id === itemId);
+    if (!item) return;
+
     if (!window.emailjs) {
       alert("Email service is not available right now. Please try again later.");
       return;
     }
 
-    generateCodeBtn.disabled = true;
-    generateCodeBtn.textContent = "Sending...";
+    const code = generateRandomCode();
+
+    if (btnEl) {
+      btnEl.disabled = true;
+      btnEl.textContent = "Sending...";
+    }
 
     const templateParams = {
       user_name: currentUser ? currentUser.name : "Unknown User",
       user_email: currentUser ? currentUser.email : "Unknown",
-      selected_card: selectedCard.label,
-      payment_code: paymentCode
+      selected_card: item.label,
+      payment_code: code
     };
 
     emailjs
       .send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, templateParams)
       .then(() => {
+        item.code = code;
+        item.status = "sent";
+        saveWallet();
+        renderWallet();
+
         alert(
-          "Thank you! Your " + selectedCard.label +
-            " recharge request was sent successfully. " +
+          "Thank you! Your " + item.label +
+            " payment code was generated and sent. " +
             "You'll now be redirected to WhatsApp to confirm with the owner."
         );
 
         // Build a WhatsApp deep link with a pre-filled message and open it.
-        // International format required: country code + number, no leading 0.
         const waNumber = "94" + CONFIG.WHATSAPP_NUMBER.replace(/^0/, "");
         const waMessage = encodeURIComponent(
-          "Hi, I just requested a " + selectedCard.label +
-            " recharge (code: " + paymentCode + "). Please confirm my payment."
+          "Hi, I just requested a " + item.label +
+            " recharge (code: " + code + "). Please confirm my payment."
         );
         window.open("https://wa.me/" + waNumber + "?text=" + waMessage, "_blank");
-
-        // Reset back to dashboard so another card can be selected
-        selectedView.classList.add("hidden");
-        dashboardView.classList.remove("hidden");
-        selectedCard = null;
-        generatedCodeBox.classList.add("hidden");
-        generatedCodeValue.textContent = "—";
       })
       .catch((err) => {
         console.error("EmailJS send error:", err);
         const detail = (err && (err.text || err.message)) || "Unknown error";
         alert("Failed to send the request: " + detail);
-      })
-      .finally(() => {
-        generateCodeBtn.disabled = false;
-        generateCodeBtn.textContent = "Generate Code";
+        if (btnEl) {
+          btnEl.disabled = false;
+          btnEl.textContent = "Generate Code";
+        }
       });
   }
 
@@ -563,9 +761,11 @@
     appScreen.classList.remove("hidden");
     dashboardView.classList.remove("hidden");
     selectedView.classList.add("hidden");
+    walletView.classList.add("hidden");
     userNameLabel.textContent = currentUser
       ? `${currentUser.name}\n${currentUser.email}`
       : "—";
+    loadWallet();
     renderCardGrid();
   }
 
