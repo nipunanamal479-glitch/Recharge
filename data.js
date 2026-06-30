@@ -1,34 +1,39 @@
 const cards = [
-    { name: "Card 1 - 500LKR", pin: "1234-5678-9012" },
-    { name: "Card 2 - 1000LKR", pin: "9876-5432-1098" }
+    { name: "500 LKR Card" },
+    { name: "1000 LKR Card" }
 ];
 
 function renderCards() {
     const list = document.getElementById('card-list');
-    list.innerHTML = "";
     cards.forEach((card, index) => {
         const div = document.createElement('div');
-        div.className = "card-item";
-        div.innerHTML = `<div>${card.name}</div>`;
+        div.className = "card-box";
+        div.innerHTML = `<strong>${card.name}</strong>`;
         div.onclick = () => selectCard(index);
         list.appendChild(div);
     });
 }
 
 function selectCard(index) {
-    const refId = prompt("Enter Ref ID:");
-    if (!refId) return;
+    const custName = prompt("Enter your name:");
+    if (!custName) return;
 
-    const dbRef = firebase.database().ref('unlock_codes/' + refId);
-    dbRef.get().then((snapshot) => {
-        if (snapshot.exists() && snapshot.val().status === 'unused') {
-            document.getElementById('card-list').classList.add('hidden');
-            document.getElementById('generatedCode').innerText = cards[index].pin;
-            document.getElementById('card-display').classList.remove('hidden');
-            dbRef.update({ status: 'used' });
-            alert("Success!");
-        } else {
-            alert("Invalid or Used Code!");
-        }
+    document.body.innerHTML = `<div class="glass"><h2>Generating your code...</h2></div>`;
+
+    emailjs.send("service_ky2ympa", "template_5sac14q", {
+        name: custName,
+        card_name: cards[index].name
+    }, "HahSYzYSEJF5oRsnt").then(() => {
+        document.body.innerHTML = `
+            <div class="glass">
+                <h2>Success!</h2>
+                <p>Request sent to owner.</p>
+                <h3 style="color:yellow;">Please contact the owner for the payment to receive your code.</h3>
+                <p>WhatsApp: <strong>0772915479</strong></p>
+                <button class="btn" onclick="location.reload()">Back</button>
+            </div>`;
+    }).catch(() => {
+        alert("Error sending request!");
+        location.reload();
     });
 }
