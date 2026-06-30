@@ -3,57 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital System</title>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <title>Digital Recharge</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function(){ emailjs.init("HahSYzYSEJF5oRsnt"); })();
+    </script>
     <style>
-        body { margin: 0; height: 100vh; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #0f172a, #312e81); font-family: sans-serif; color: white; }
-        .glass-box { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px); padding: 30px; border-radius: 25px; text-align: center; width: 300px; }
-        .hidden { display: none; }
-        .card-item { background: rgba(255, 255, 255, 0.1); padding: 15px; border-radius: 10px; margin: 10px 0; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
-        .btn { padding: 10px 20px; border-radius: 50px; border: none; cursor: pointer; font-weight: bold; }
+        body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #0f172a; color: white; font-family: sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 20px; backdrop-filter: blur(10px); width: 300px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .btn { background: #6366f1; color: white; border: none; padding: 12px 20px; border-radius: 50px; cursor: pointer; width: 100%; margin-top: 15px; }
+        .card-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; margin: 10px 0; border: 1px solid #4f46e5; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div id="login-view" class="glass-box">
+    <div id="login-view" class="glass">
         <h1>Welcome</h1>
         <button class="btn" onclick="login()">Sign in with Google</button>
     </div>
 
-    <div id="dashboard-view" class="glass-box hidden">
-        <h3>SELECT CARD</h3>
+    <div id="dash-view" class="glass" style="display:none;">
+        <h3>Select Card</h3>
         <div id="card-list"></div>
-        <button class="btn" style="margin-top:20px; background:red; color:white;" onclick="logout()">Logout</button>
-        
-        <div id="card-display" class="hidden" style="margin-top:20px; padding:20px; background:#6366f1; border-radius:15px;">
-            <h2 id="generatedCode">XXXX-XXXX</h2>
-        </div>
+        <button class="btn" style="background:red;" onclick="logout()">Logout</button>
     </div>
 
     <script src="data.js"></script>
     <script>
-        const firebaseConfig = { databaseURL: "https://recharge-card-1840c-default-rtdb.asia-southeast1.firebaseio.app" };
-        firebase.initializeApp(firebaseConfig);
-
         function login() {
-            const CLIENT_ID = '12019111383-058lqu79k9jvbdcq7brqql1ukt1028l8.apps.googleusercontent.com';
-            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(window.location.origin + window.location.pathname)}&response_type=token&scope=email profile&prompt=consent`;
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=12019111383-058lqu79k9jvbdcq7brqql1ukt1028l8.apps.googleusercontent.com&redirect_uri=${window.location.origin}${window.location.pathname}&response_type=token&scope=email profile&prompt=consent`;
             window.location.href = authUrl;
         }
 
-        function logout() {
-            localStorage.removeItem('user_token');
-            window.location.reload();
-        }
+        function logout() { localStorage.removeItem('user_token'); location.reload(); }
 
-        window.onload = function() {
-            const token = new URLSearchParams(window.location.hash.substring(1)).get('access_token');
-            if (token) { localStorage.setItem('user_token', token); window.location.hash = ""; }
+        window.onload = () => {
+            const params = new URLSearchParams(window.location.hash.substring(1));
+            const token = params.get('access_token');
+            if (token) localStorage.setItem('user_token', token);
+            
             if (localStorage.getItem('user_token')) {
                 document.getElementById('login-view').style.display = 'none';
-                document.getElementById('dashboard-view').classList.remove('hidden');
+                document.getElementById('dash-view').style.display = 'block';
                 renderCards();
             }
         };
