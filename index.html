@@ -5,43 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Recharge</title>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript">
-        (function(){ emailjs.init("HahSYzYSEJF5oRsnt"); })();
-    </script>
+    <script type="text/javascript">(function(){ emailjs.init("HahSYzYSEJF5oRsnt"); })();</script>
     <style>
-        body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #0f172a; color: white; font-family: sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.1); padding: 30px; border-radius: 20px; backdrop-filter: blur(10px); width: 300px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-        .btn { background: #6366f1; color: white; border: none; padding: 12px 20px; border-radius: 50px; cursor: pointer; width: 100%; margin-top: 15px; }
-        .card-box { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; margin: 10px 0; border: 1px solid #4f46e5; cursor: pointer; }
+        body { margin: 0; background: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .glass { background: rgba(255, 255, 255, 0.1); padding: 25px; border-radius: 20px; width: 320px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .btn { background: #6366f1; color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; margin-top: 10px; cursor: pointer; }
+        .card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .card-box { background: #1e293b; border: 1px solid #4f46e5; padding: 15px; border-radius: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
-
-    <div id="login-view" class="glass">
-        <h1>Welcome</h1>
-        <button class="btn" onclick="login()">Sign in with Google</button>
+    <div id="app" class="glass">
+        <div id="login-view"><h1>Welcome</h1><button class="btn" onclick="login()">Sign in with Google</button></div>
+        <div id="dash-view" style="display:none;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <span>Digital Recharge</span>
+                <span onclick="logout()" style="cursor:pointer; color:#ef4444;">Logout</span>
+            </div>
+            <div id="card-list" class="card-grid"></div>
+        </div>
     </div>
-
-    <div id="dash-view" class="glass" style="display:none;">
-        <h3>Select Card</h3>
-        <div id="card-list"></div>
-        <button class="btn" style="background:red;" onclick="logout()">Logout</button>
-    </div>
-
     <script src="data.js"></script>
     <script>
-        function login() {
-            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=12019111383-058lqu79k9jvbdcq7brqql1ukt1028l8.apps.googleusercontent.com&redirect_uri=${window.location.origin}${window.location.pathname}&response_type=token&scope=email profile&prompt=consent`;
-            window.location.href = authUrl;
-        }
-
+        function login() { window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=12019111383-058lqu79k9jvbdcq7brqql1ukt1028l8.apps.googleusercontent.com&redirect_uri=${window.location.origin}${window.location.pathname}&response_type=token&scope=email profile&prompt=consent`; }
         function logout() { localStorage.removeItem('user_token'); location.reload(); }
-
         window.onload = () => {
             const params = new URLSearchParams(window.location.hash.substring(1));
             const token = params.get('access_token');
             if (token) localStorage.setItem('user_token', token);
-            
             if (localStorage.getItem('user_token')) {
                 document.getElementById('login-view').style.display = 'none';
                 document.getElementById('dash-view').style.display = 'block';
