@@ -5,34 +5,30 @@ const cards = [
 
 function renderCards() {
     const list = document.getElementById('card-list');
+    list.innerHTML = "";
     cards.forEach((card, index) => {
-        const btn = document.createElement('button');
-        btn.className = "google-btn";
-        btn.innerText = card.name;
-        btn.onclick = () => selectCard(index);
-        list.appendChild(btn);
+        const div = document.createElement('div');
+        div.className = "card-item";
+        div.innerHTML = `<div>${card.name}</div>`;
+        div.onclick = () => selectCard(index);
+        list.appendChild(div);
     });
 }
 
 function selectCard(index) {
-    const refId = prompt("ඔබ මුදල් ගෙවූ Ref ID එක ඇතුළත් කරන්න:");
-    
-    if (refId) {
-        // Firebase එකෙන් Ref ID එක චෙක් කරනවා
-        const dbRef = firebase.database().ref('unlock_codes/' + refId);
-        
-        dbRef.get().then((snapshot) => {
-            if (snapshot.exists() && snapshot.val().status === 'unused') {
-                document.getElementById('card-list').classList.add('hidden');
-                document.getElementById('card-display').classList.remove('hidden');
-                document.getElementById('generatedCode').innerText = cards[index].pin;
-                
-                // පාවිච්චි කළා කියලා මාර්ක් කරනවා
-                dbRef.update({ status: 'used' });
-                alert("සාර්ථකයි! කාඩ් එක Unlock වුණා.");
-            } else {
-                alert("වැරදි Ref ID එකක් හෝ දැනටමත් පාවිච්චි කරලා!");
-            }
-        });
-    }
+    const refId = prompt("Enter Ref ID:");
+    if (!refId) return;
+
+    const dbRef = firebase.database().ref('unlock_codes/' + refId);
+    dbRef.get().then((snapshot) => {
+        if (snapshot.exists() && snapshot.val().status === 'unused') {
+            document.getElementById('card-list').classList.add('hidden');
+            document.getElementById('generatedCode').innerText = cards[index].pin;
+            document.getElementById('card-display').classList.remove('hidden');
+            dbRef.update({ status: 'used' });
+            alert("Success!");
+        } else {
+            alert("Invalid or Used Code!");
+        }
+    });
 }
