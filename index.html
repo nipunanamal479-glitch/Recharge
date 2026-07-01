@@ -4,1263 +4,802 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>Digital Recharge</title>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="data.js"></script>
 <style>
   :root {
-    --bg: #0f172a;
-    --panel: #1e293b;
-    --panel-glass: rgba(30, 41, 59, 0.7);
-    --border: rgba(148, 163, 184, 0.15);
-    --accent: #3b82f6;
-    --accent-hover: #2563eb;
-    --text: #e2e8f0;
-    --text-dim: #94a3b8;
-    --danger: #ef4444;
-    --danger-hover: #dc2626;
-    --success: #4ade80;
+    --bg: #0f172a; --panel: #1e293b; --panel-glass: rgba(30,41,59,0.7);
+    --border: rgba(148,163,184,0.15); --accent: #3b82f6; --accent-hover: #2563eb;
+    --text: #e2e8f0; --text-dim: #94a3b8; --danger: #ef4444; --danger-hover: #dc2626; --success: #4ade80;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: var(--bg);
-    background-image:
-      radial-gradient(circle at 20% 20%, rgba(59,130,246,0.15), transparent 40%),
-      radial-gradient(circle at 80% 80%, rgba(99,102,241,0.12), transparent 40%);
+    background-image: radial-gradient(circle at 20% 20%, rgba(59,130,246,0.15), transparent 40%),
+                      radial-gradient(circle at 80% 80%, rgba(99,102,241,0.12), transparent 40%);
     min-height: 100vh;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--text);
-    overflow-x: hidden;
+    color: var(--text); overflow-x: hidden;
   }
   .hidden { display: none !important; }
 
-  /* ---------- Login Screen ---------- */
-  #loginScreen {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-  }
-  .auth-stage { width: 100%; max-width: 360px; perspective: 1400px; }
+  /* ── Login ── */
+  #loginScreen { min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px; }
+  .auth-stage { width:100%; max-width:360px; perspective:1400px; }
   .login-card {
-    background: var(--panel-glass);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 40px 28px;
-    width: 100%;
-    text-align: center;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-    animation: card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    background:var(--panel-glass); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    border:1px solid var(--border); border-radius:20px; padding:40px 28px; width:100%;
+    text-align:center; box-shadow:0 8px 32px rgba(0,0,0,.4); animation:card-in .5s cubic-bezier(.22,1,.36,1) both;
   }
-  @keyframes card-in {
-    0% { opacity: 0; transform: translateY(14px) scale(0.97); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
-  }
-  .login-card .logo {
-    font-size: 40px; margin-bottom: 8px; display: inline-block;
-    animation: logo-glow 2.6s ease-in-out infinite;
-  }
+  @keyframes card-in { 0%{opacity:0;transform:translateY(14px) scale(.97)} 100%{opacity:1;transform:none} }
+  .login-card .logo { font-size:40px; margin-bottom:8px; display:inline-block; animation:logo-glow 2.6s ease-in-out infinite; }
   @keyframes logo-glow {
-    0%, 100% { filter: drop-shadow(0 0 4px rgba(251,191,36,0.25)); transform: translateY(0); }
-    50% { filter: drop-shadow(0 0 14px rgba(251,191,36,0.65)); transform: translateY(-2px); }
+    0%,100% { filter:drop-shadow(0 0 4px rgba(251,191,36,.25)); transform:translateY(0); }
+    50%      { filter:drop-shadow(0 0 14px rgba(251,191,36,.65)); transform:translateY(-2px); }
   }
-  .login-card h1 { font-size: 22px; margin-bottom: 6px; }
-  .login-card p.subtitle { color: var(--text-dim); font-size: 14px; margin-bottom: 28px; transition: opacity 0.2s ease; }
-
+  .login-card h1 { font-size:22px; margin-bottom:6px; }
+  .login-card p.subtitle { color:var(--text-dim); font-size:14px; margin-bottom:28px; }
   #googleSignInBtn.google-btn-fake {
-    width: 100%; height: 44px; border-radius: 999px;
-    border: 1px solid var(--border); background: #fff; color: #1f2430;
-    font-size: 14.5px; font-weight: 600; display: flex; align-items: center;
-    justify-content: center; cursor: pointer; transition: transform 0.15s ease, background 0.15s ease;
+    width:100%; height:44px; border-radius:999px; border:1px solid var(--border);
+    background:#fff; color:#1f2430; font-size:14.5px; font-weight:600;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition:transform .15s ease, background .15s ease;
   }
-  #googleSignInBtn.google-btn-fake:hover { background: #f1f3f5; transform: translateY(-1px); }
-  #googleSignInBtn.google-btn-fake:active { transform: translateY(0); }
-  #googleSignInBtn.google-btn-fake:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-  .auth-divider {
-    display: flex; align-items: center; gap: 10px;
-    margin: 20px 0 16px; color: var(--text-dim); font-size: 12.5px;
-  }
-  .auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
-
-  .field { position: relative; margin-bottom: 12px; text-align: left; }
+  #googleSignInBtn.google-btn-fake:hover { background:#f1f3f5; transform:translateY(-1px); }
+  #googleSignInBtn.google-btn-fake:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+  .auth-divider { display:flex; align-items:center; gap:10px; margin:20px 0 16px; color:var(--text-dim); font-size:12.5px; }
+  .auth-divider::before,.auth-divider::after { content:""; flex:1; height:1px; background:var(--border); }
+  .field { position:relative; margin-bottom:12px; text-align:left; }
   .auth-input {
-    width: 100%; background: var(--panel); border: 1px solid var(--border);
-    color: var(--text); padding: 14px; border-radius: 10px; font-size: 14px;
-    outline: none; transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    width:100%; background:var(--panel); border:1px solid var(--border); color:var(--text);
+    padding:14px; border-radius:10px; font-size:14px; outline:none;
+    transition:border-color .18s ease, box-shadow .18s ease;
   }
-  .auth-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,0.18); }
-  .auth-input.field-error { border-color: var(--danger); animation: shake 0.35s ease; }
-  .auth-input.field-ok { border-color: var(--success); }
+  .auth-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(59,130,246,.18); }
+  .auth-input.field-error { border-color:var(--danger); animation:shake .35s ease; }
+  .auth-input.field-ok { border-color:var(--success); }
   @keyframes shake {
-    0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); }
-    40% { transform: translateX(5px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); }
+    0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(5px)}
+    60%{transform:translateX(-4px)} 80%{transform:translateX(3px)}
   }
-  .field-toggle {
-    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; color: var(--text-dim); font-size: 12px;
-    cursor: pointer; padding: 4px 6px; user-select: none;
-  }
-  .field-toggle:hover { color: var(--text); }
-  .strength-wrap { height: 4px; border-radius: 4px; background: rgba(148,163,184,0.15); overflow: hidden; margin: 6px 2px 0; }
-  .strength-bar { height: 100%; width: 0%; border-radius: 4px; background: var(--danger); transition: width 0.25s ease, background 0.25s ease; }
-  .strength-label { font-size: 11px; color: var(--text-dim); margin-top: 4px; text-align: left; min-height: 14px; }
-  .match-hint { font-size: 11.5px; margin-top: 4px; text-align: left; min-height: 14px; transition: color 0.2s ease; }
-  .match-hint.ok { color: var(--success); }
-  .match-hint.bad { color: var(--danger); }
-  .auth-error {
-    color: var(--danger); font-size: 12.5px; text-align: left; margin-bottom: 10px;
-    max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.2s ease;
-  }
-  .auth-error.show { max-height: 60px; opacity: 1; margin-bottom: 10px; }
-  .auth-success {
-    color: var(--success); font-size: 12.5px; text-align: left; margin-bottom: 10px;
-    max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.25s ease, opacity 0.2s ease, margin 0.2s ease;
-  }
-  .auth-success.show { max-height: 60px; opacity: 1; margin-bottom: 10px; }
+  .field-toggle { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--text-dim); font-size:12px; cursor:pointer; padding:4px 6px; user-select:none; }
+  .field-toggle:hover { color:var(--text); }
+  .strength-wrap { height:4px; border-radius:4px; background:rgba(148,163,184,.15); overflow:hidden; margin:6px 2px 0; }
+  .strength-bar { height:100%; width:0%; border-radius:4px; background:var(--danger); transition:width .25s ease, background .25s ease; }
+  .strength-label { font-size:11px; color:var(--text-dim); margin-top:4px; text-align:left; min-height:14px; }
+  .match-hint { font-size:11.5px; margin-top:4px; text-align:left; min-height:14px; transition:color .2s ease; }
+  .match-hint.ok { color:var(--success); }
+  .match-hint.bad { color:var(--danger); }
+  .auth-error,.auth-success { font-size:12.5px; text-align:left; margin-bottom:10px; max-height:0; overflow:hidden; opacity:0; transition:max-height .25s ease, opacity .2s ease, margin .2s ease; }
+  .auth-error { color:var(--danger); }
+  .auth-success { color:var(--success); }
+  .auth-error.show,.auth-success.show { max-height:60px; opacity:1; margin-bottom:10px; }
   .auth-primary-btn {
-    width: 100%; background: var(--accent); color: #fff; border: none; padding: 13px;
-    border-radius: 10px; font-size: 14.5px; font-weight: 700; cursor: pointer;
-    margin-bottom: 10px; margin-top: 4px; transition: background 0.15s ease, transform 0.1s ease;
+    width:100%; background:var(--accent); color:#fff; border:none; padding:13px; border-radius:10px;
+    font-size:14.5px; font-weight:700; cursor:pointer; margin-bottom:10px; margin-top:4px;
+    transition:background .15s ease, transform .1s ease;
   }
-  .auth-primary-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
-  .auth-primary-btn:active { transform: translateY(0); }
-  .auth-primary-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+  .auth-primary-btn:hover { background:var(--accent-hover); transform:translateY(-1px); }
+  .auth-primary-btn:active { transform:translateY(0); }
+  .auth-primary-btn:disabled { opacity:.65; cursor:not-allowed; transform:none; }
   .auth-secondary-btn {
-    width: 100%; background: transparent; color: var(--text-dim); border: 1px solid var(--border);
-    padding: 11px; border-radius: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease;
+    width:100%; background:transparent; color:var(--text-dim); border:1px solid var(--border);
+    padding:11px; border-radius:10px; font-size:13.5px; font-weight:600; cursor:pointer;
+    transition:color .15s ease, border-color .15s ease;
   }
-  .auth-secondary-btn:hover { color: var(--text); border-color: var(--accent); }
+  .auth-secondary-btn:hover { color:var(--text); border-color:var(--accent); }
+  .auth-panels { position:relative; width:100%; overflow:hidden; }
+  .auth-panel { width:100%; }
+  .auth-panel.slide-out-left  { animation:slide-out-left  .32s cubic-bezier(.4,0,.2,1) both; }
+  .auth-panel.slide-in-right  { animation:slide-in-right  .32s cubic-bezier(.22,1,.36,1) both; }
+  .auth-panel.slide-out-right { animation:slide-out-right .32s cubic-bezier(.4,0,.2,1) both; }
+  .auth-panel.slide-in-left   { animation:slide-in-left   .32s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes slide-out-left  { to{opacity:0;transform:translateX(-26px)} }
+  @keyframes slide-in-right  { from{opacity:0;transform:translateX(26px)} to{opacity:1;transform:none} }
+  @keyframes slide-out-right { to{opacity:0;transform:translateX(26px)} }
+  @keyframes slide-in-left   { from{opacity:0;transform:translateX(-26px)} to{opacity:1;transform:none} }
 
-  .auth-panels { position: relative; width: 100%; overflow: hidden; }
-  .auth-panel { width: 100%; }
-  .auth-panel.slide-out-left { animation: slide-out-left 0.32s cubic-bezier(0.4, 0, 0.2, 1) both; }
-  .auth-panel.slide-in-right { animation: slide-in-right 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
-  .auth-panel.slide-out-right { animation: slide-out-right 0.32s cubic-bezier(0.4, 0, 0.2, 1) both; }
-  .auth-panel.slide-in-left { animation: slide-in-left 0.32s cubic-bezier(0.22, 1, 0.36, 1) both; }
-  @keyframes slide-out-left { to { opacity: 0; transform: translateX(-26px); } }
-  @keyframes slide-in-right { from { opacity: 0; transform: translateX(26px); } to { opacity: 1; transform: translateX(0); } }
-  @keyframes slide-out-right { to { opacity: 0; transform: translateX(26px); } }
-  @keyframes slide-in-left { from { opacity: 0; transform: translateX(-26px); } to { opacity: 1; transform: translateX(0); } }
+  /* ── App shell ── */
+  #appScreen { min-height:100vh; display:flex; flex-direction:column; }
+  header { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; background:var(--panel-glass); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; gap:8px; }
+  header h2 { font-size:17px; font-weight:700; letter-spacing:.3px; flex-shrink:0; }
+  .header-actions { display:flex; align-items:center; gap:6px; }
+  .balance-pill { background:linear-gradient(135deg,var(--accent),#6366f1); color:#fff; padding:7px 12px; border-radius:999px; font-size:12.5px; font-weight:700; white-space:nowrap; box-shadow:0 4px 14px rgba(59,130,246,.35); transition:transform .25s cubic-bezier(.34,1.56,.64,1); }
+  .balance-pill.bump { animation:balance-bump .5s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes balance-bump { 0%{transform:scale(1)} 40%{transform:scale(1.18)} 100%{transform:scale(1)} }
+  .account-wrap { position:relative; }
+  #accountBtn, .icon-nav-btn { background:var(--panel); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:10px; font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+  #accountBtn:hover, .icon-nav-btn:hover { background:#273449; }
+  #accountDropdown { position:absolute; right:0; top:calc(100% + 8px); background:var(--panel); border:1px solid var(--border); border-radius:12px; min-width:180px; padding:10px; box-shadow:0 10px 30px rgba(0,0,0,.5); z-index:60; }
+  #accountDropdown .user-name { font-size:13px; color:var(--text-dim); padding:4px 8px 10px; border-bottom:1px solid var(--border); margin-bottom:8px; word-break:break-word; white-space:pre-line; }
+  #logoutBtn { width:100%; background:var(--danger); color:#fff; border:none; padding:10px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; }
+  #logoutBtn:hover { background:var(--danger-hover); }
+  .subnav { display:flex; gap:8px; padding:12px 16px 0; max-width:480px; margin:0 auto; width:100%; }
+  .subnav button { flex:1; background:var(--panel); border:1px solid var(--border); color:var(--text-dim); padding:10px; border-radius:10px 10px 0 0; font-size:13px; font-weight:700; cursor:pointer; border-bottom:2px solid transparent; }
+  .subnav button.active { color:var(--text); border-bottom:2px solid var(--accent); background:#243348; }
+  main { flex:1; padding:20px 16px 60px; display:flex; justify-content:center; }
+  .container { width:100%; max-width:480px; }
+  .panel { background:var(--panel-glass); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid var(--border); border-radius:18px; padding:24px; box-shadow:0 8px 32px rgba(0,0,0,.35); }
+  .panel + .panel { margin-top:16px; }
+  .panel h3 { font-size:16px; color:var(--text-dim); margin-bottom:16px; text-align:center; font-weight:500; }
+  .card-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  .recharge-card { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:22px 8px; text-align:center; cursor:pointer; transition:transform .15s ease, border-color .15s ease, background .15s ease; }
+  .recharge-card:hover { transform:translateY(-2px); border-color:var(--accent); background:#243348; }
+  .recharge-card .icon { font-size:26px; margin-bottom:8px; }
+  .recharge-card .amount { font-size:15px; font-weight:700; }
+  #selectedView .panel { text-align:center; }
+  .back-btn { background:none; border:none; color:var(--text-dim); font-size:14px; cursor:pointer; margin-bottom:18px; display:flex; align-items:center; gap:6px; }
+  .back-btn:hover { color:var(--text); }
+  .selected-amount-display { background:linear-gradient(135deg,var(--accent),#6366f1); border-radius:16px; padding:28px; margin-bottom:24px; }
+  .selected-amount-display .label { font-size:13px; opacity:.85; margin-bottom:6px; }
+  .selected-amount-display .value { font-size:32px; font-weight:800; }
+  .selected-amount-display .balance-note { font-size:12px; opacity:.85; margin-top:10px; }
+  #buyBtn { width:100%; background:var(--accent); color:#fff; border:none; padding:14px; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; transition:background .15s ease; }
+  #buyBtn:hover { background:var(--accent-hover); }
+  #buyBtn:disabled { opacity:.6; cursor:not-allowed; }
+  .hint { margin-top:14px; font-size:12.5px; color:var(--text-dim); }
 
-  .success-burst {
-    width: 64px; height: 64px; margin: 4px auto 14px; border-radius: 50%;
-    background: rgba(74, 222, 128, 0.12); display: flex; align-items: center;
-    justify-content: center; position: relative;
-  }
-  .success-burst svg { width: 32px; height: 32px; }
-  .success-burst .ring {
-    position: absolute; inset: 0; border-radius: 50%;
-    border: 2px solid var(--success); animation: ring-pop 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-  .success-burst .check-path { stroke-dasharray: 28; stroke-dashoffset: 28; animation: check-draw 0.4s 0.25s ease forwards; }
-  @keyframes ring-pop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-  @keyframes check-draw { to { stroke-dashoffset: 0; } }
+  /* ── Wallet / card history items ── */
+  .wallet-item { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px; }
+  .wallet-item:last-child { margin-bottom:0; }
+  .wallet-item-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .wallet-item-amount { font-size:17px; font-weight:700; }
+  .wallet-item-status { font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; text-transform:uppercase; letter-spacing:.5px; }
+  .wallet-item-status.pending { background:rgba(251,191,36,.15); color:#fbbf24; }
+  .wallet-item-status.sent { background:rgba(74,222,128,.15); color:#4ade80; }
+  .wallet-item-date { font-size:12px; color:var(--text-dim); margin-bottom:10px; }
+  .wallet-empty { text-align:center; color:var(--text-dim); font-size:14px; padding:30px 10px; }
 
-  /* ---------- App Shell ---------- */
-  #appScreen { min-height: 100vh; display: flex; flex-direction: column; }
-  header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 20px; background: var(--panel-glass); backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; z-index: 50;
-  }
-  header h2 { font-size: 18px; font-weight: 700; letter-spacing: 0.3px; }
-  .account-wrap { position: relative; }
-  #accountBtn {
-    background: var(--panel); border: 1px solid var(--border); color: var(--text);
-    padding: 8px 16px; border-radius: 10px; font-size: 14px; cursor: pointer;
-    display: flex; align-items: center; gap: 6px;
-  }
-  #accountBtn:hover { background: #273449; }
-  #accountDropdown {
-    position: absolute; right: 0; top: calc(100% + 8px); background: var(--panel);
-    border: 1px solid var(--border); border-radius: 12px; min-width: 180px; padding: 10px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 60;
-  }
-  #accountDropdown .user-name {
-    font-size: 13px; color: var(--text-dim); padding: 4px 8px 10px;
-    border-bottom: 1px solid var(--border); margin-bottom: 8px; word-break: break-word; white-space: pre-line;
-  }
-  #logoutBtn {
-    width: 100%; background: var(--danger); color: #fff; border: none;
-    padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
-  }
-  #logoutBtn:hover { background: var(--danger-hover); }
-  main { flex: 1; padding: 24px 16px 60px; display: flex; justify-content: center; }
-  .container { width: 100%; max-width: 480px; }
-  .panel {
-    background: var(--panel-glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--border); border-radius: 18px; padding: 24px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.35);
-  }
-  .panel h3 { font-size: 16px; color: var(--text-dim); margin-bottom: 16px; text-align: center; font-weight: 500; }
+  /* ── Top Up (EZ Cash reference) ── */
+  .ezcash-box { background:rgba(59,130,246,.08); border:1px solid rgba(59,130,246,.25); border-radius:14px; padding:20px; text-align:center; margin-bottom:18px; }
+  .ezcash-box .store-name { color:var(--accent); font-weight:800; font-size:15px; margin-bottom:10px; letter-spacing:.5px; }
+  .ezcash-box .ezcash-label { font-size:12px; color:var(--text-dim); margin-bottom:4px; }
+  .ezcash-box .ezcash-number { color:var(--success); font-weight:800; font-size:19px; letter-spacing:.5px; margin-bottom:14px; }
+  .ezcash-box .ezcash-note { font-size:12px; color:var(--text-dim); line-height:1.6; text-align:left; }
+  .ezcash-box .ezcash-note b { color:#fbbf24; font-weight:700; }
+  .field-label { font-size:12.5px; color:var(--text-dim); margin-bottom:6px; display:block; }
+  .amount-quick-row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:12px; }
+  .amount-quick-row button { background:var(--panel); border:1px solid var(--border); color:var(--text); padding:9px 4px; border-radius:8px; font-size:12.5px; font-weight:700; cursor:pointer; }
+  .amount-quick-row button.active, .amount-quick-row button:hover { border-color:var(--accent); background:#243348; }
+  #topupSubmitBtn { width:100%; background:var(--accent); color:#fff; border:none; padding:13px; border-radius:12px; font-size:14.5px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+  #topupSubmitBtn:hover { background:var(--accent-hover); }
+  #topupSubmitBtn:disabled { opacity:.65; cursor:not-allowed; }
+  .topup-waiting { display:none; align-items:center; gap:10px; background:rgba(251,191,36,.1); border:1px solid rgba(251,191,36,.3); border-radius:12px; padding:14px; margin-top:14px; font-size:13px; color:#fbbf24; }
+  .topup-waiting.show { display:flex; }
+  .mini-spinner { width:16px; height:16px; border:2px solid rgba(251,191,36,.3); border-top-color:#fbbf24; border-radius:50%; animation:btn-spin .7s linear infinite; flex-shrink:0; }
+  .topup-success { display:none; text-align:center; padding:6px 0 2px; }
+  .topup-success.show { display:block; animation:topup-pop .5s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes topup-pop { 0%{transform:scale(.5);opacity:0} 100%{transform:scale(1);opacity:1} }
+  .topup-success .check-circle { width:56px; height:56px; margin:0 auto 12px; border-radius:50%; background:rgba(74,222,128,.15); display:flex; align-items:center; justify-content:center; font-size:28px; color:var(--success); }
+  .topup-success .amt { font-size:22px; font-weight:800; color:var(--success); margin-bottom:4px; }
 
-  /* ---------- Card Grid ---------- */
-  .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  .recharge-card {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
-    padding: 22px 8px; text-align: center; cursor: pointer;
-    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
-  }
-  .recharge-card:hover { transform: translateY(-2px); border-color: var(--accent); background: #243348; }
-  .recharge-card .icon { font-size: 26px; margin-bottom: 8px; }
-  .recharge-card .amount { font-size: 15px; font-weight: 700; }
+  .btn-spinner { width:14px; height:14px; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:btn-spin .7s linear infinite; display:inline-block; }
+  @keyframes btn-spin { to{transform:rotate(360deg)} }
 
-  /* ---------- Selected Card ---------- */
-  #selectedView .panel { text-align: center; }
-  .back-btn {
-    background: none; border: none; color: var(--text-dim); font-size: 14px;
-    cursor: pointer; margin-bottom: 18px; display: flex; align-items: center; gap: 6px;
-  }
-  .back-btn:hover { color: var(--text); }
-  .selected-amount-display {
-    background: linear-gradient(135deg, var(--accent), #6366f1);
-    border-radius: 16px; padding: 28px; margin-bottom: 24px;
-  }
-  .selected-amount-display .label { font-size: 13px; opacity: 0.85; margin-bottom: 6px; }
-  .selected-amount-display .value { font-size: 32px; font-weight: 800; }
-  #buyBtn {
-    width: 100%; background: var(--accent); color: #fff; border: none; padding: 14px;
-    border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: background 0.15s ease;
-  }
-  #buyBtn:hover { background: var(--accent-hover); }
-  #buyBtn:disabled { opacity: 0.6; cursor: not-allowed; }
-  .hint { margin-top: 14px; font-size: 12.5px; color: var(--text-dim); }
-
-  #walletNavBtn {
-    background: var(--panel); border: 1px solid var(--border); color: var(--text);
-    padding: 8px 14px; border-radius: 10px; font-size: 13px; cursor: pointer;
-  }
-  #walletNavBtn:hover { background: #273449; }
-
-  /* ---------- Wallet ---------- */
-  .wallet-item { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
-  .wallet-item:last-child { margin-bottom: 0; }
-  .wallet-item-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-  .wallet-item-amount { font-size: 17px; font-weight: 700; }
-  .wallet-item-status {
-    font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;
-    text-transform: uppercase; letter-spacing: 0.5px;
-  }
-  .wallet-item-status.pending { background: rgba(251,191,36,0.15); color: #fbbf24; }
-  .wallet-item-status.sent { background: rgba(74,222,128,0.15); color: #4ade80; }
-  .wallet-item-date { font-size: 12px; color: var(--text-dim); margin-bottom: 10px; }
-
-  /* -------- BOMB EXPLOSION ANIMATION -------- */
-  .bomb-stage {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 110px;
-    overflow: hidden;
-    border-radius: 12px;
-    background: rgba(0,0,0,0.15);
+  /* ─────────────────────────────────────────────────────
+     CARD TEAR + BOMB REVEAL ANIMATION
+  ───────────────────────────────────────────────────── */
+  .reveal-stage {
+    position: relative; min-height: 190px; display: flex; justify-content: center; align-items: center;
+    overflow: hidden; border-radius: 12px;
+    background: radial-gradient(ellipse at 50% 60%, rgba(30,50,90,0.6), rgba(10,15,30,0.8));
     margin-bottom: 12px;
   }
-  .bomb-icon {
-    position: absolute;
-    font-size: 42px;
-    z-index: 5;
-    animation: bomb-wobble 0.5s ease-in-out forwards;
+  .rcard {
+    position: absolute; width: 248px; height: 138px; border-radius: 14px;
+    background: linear-gradient(135deg, #1d3a6e 0%, #0c2050 45%, #16184a 100%);
+    border: 1px solid rgba(100,160,255,0.28);
+    box-shadow: 0 10px 35px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.09);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; overflow: hidden;
   }
-  @keyframes bomb-wobble {
-    0%   { transform: rotate(0deg) scale(1); opacity: 1; }
-    25%  { transform: rotate(-14deg) scale(1.1); }
-    50%  { transform: rotate(14deg) scale(1.15); }
-    75%  { transform: rotate(-8deg) scale(1.2); opacity: 1; }
-    100% { transform: scale(4); opacity: 0; }
+  .rcard::before {
+    content: ''; position: absolute; top: -50%; left: -65%; width: 55%; height: 200%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,.09), transparent);
+    transform: skewX(-20deg); animation: card-shine 1.6s ease-in-out .05s;
   }
-  .bomb-flash {
-    position: absolute;
-    inset: -20px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 50% 50%, rgba(255,230,80,0.98) 0%, rgba(255,120,20,0.75) 35%, rgba(255,50,0,0.3) 60%, transparent 75%);
-    opacity: 0;
-    animation: bomb-flash-anim 0.45s ease-out 0.45s forwards;
+  @keyframes card-shine { 0%{left:-65%;opacity:0;} 15%{opacity:1;} 100%{left:130%;opacity:0;} }
+  .rcard-logo  { font-size:20px; position:relative; }
+  .rcard-title { font-size:9px; letter-spacing:3.5px; color:rgba(160,200,255,.65); font-weight:700; position:relative; }
+  .rcard-amount{ font-size:17px; font-weight:800; color:#60a5fa; position:relative; }
+  .rcard-scratch{ font-size:13px; color:rgba(80,120,180,.45); letter-spacing:1px; position:relative; margin-top:2px; }
+  .rcard-full { z-index: 3; animation: rcard-shake .55s ease-in-out .08s, rcard-hide .18s ease-in .62s forwards; }
+  @keyframes rcard-shake {
+    0%,100% { transform:translate(0,0) rotate(0); }
+    12%  { transform:translate(-5px, 1px) rotate(-2.5deg); }
+    25%  { transform:translate( 5px,-2px) rotate( 2.5deg); }
+    37%  { transform:translate(-4px, 2px) rotate(-3deg);   }
+    50%  { transform:translate( 5px,-1px) rotate( 3deg);   }
+    62%  { transform:translate(-4px, 1px) rotate(-2deg);   }
+    75%  { transform:translate( 4px,-1px) rotate( 2deg);   }
+    87%  { transform:translate(-2px, 0px) rotate(-1deg);   }
   }
-  @keyframes bomb-flash-anim {
-    0%   { opacity: 0; transform: scale(0.15); }
-    25%  { opacity: 1; transform: scale(1.2); }
-    100% { opacity: 0; transform: scale(2.5); }
+  @keyframes rcard-hide { 0%{opacity:1;transform:scale(1);} 100%{opacity:0;transform:scale(0.05);} }
+  .rcard-tear-top, .rcard-tear-bottom { z-index: 4; opacity: 0; }
+  .rcard-tear-top { clip-path: polygon(0 0,100% 0,106% 43%,88% 51%,64% 44%,42% 53%,16% 45%,-6% 54%); animation: tear-fly-top .48s cubic-bezier(.65,0,1,.4) .62s forwards; }
+  .rcard-tear-bottom { clip-path: polygon(-6% 54%,16% 45%,42% 53%,64% 44%,88% 51%,106% 43%,100% 100%,0 100%); animation: tear-fly-bottom .48s cubic-bezier(.65,0,1,.4) .62s forwards; }
+  @keyframes tear-fly-top { 0%{opacity:1;transform:translate(0,0) rotate(0deg);} 100%{opacity:0;transform:translate(-80px,-100px) rotate(-26deg);} }
+  @keyframes tear-fly-bottom { 0%{opacity:1;transform:translate(0,0) rotate(0deg);} 100%{opacity:0;transform:translate(80px,100px) rotate(26deg);} }
+  .rv-flash {
+    position: absolute; inset: -40px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,225,60,.97) 0%, rgba(255,110,0,.75) 30%, rgba(255,45,0,.25) 60%, transparent 72%);
+    opacity: 0; z-index: 5; pointer-events: none; animation: rv-flash-anim .52s ease-out .88s forwards;
   }
-  .bomb-shrapnel {
-    position: absolute;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    left: 50%; top: 50%;
-    opacity: 0;
-    animation: shrapnel-fly 0.6s ease-out 0.44s forwards;
+  @keyframes rv-flash-anim { 0%{opacity:0;transform:scale(.08);} 28%{opacity:1;transform:scale(1.05);} 100%{opacity:0;transform:scale(2.8);} }
+  .rv-particle { position: absolute; border-radius: 50%; left: 50%; top: 50%; opacity: 0; z-index: 5; pointer-events: none; animation: rv-particle-fly .65s ease-out forwards; }
+  @keyframes rv-particle-fly { 0%{opacity:1;transform:translate(-50%,-50%) scale(1.5);} 100%{opacity:0;transform:translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) scale(0);} }
+  .rv-smoke { position: absolute; width: 28px; height: 28px; border-radius: 50%; background: rgba(180,190,200,.28); left: 50%; top: 50%; opacity: 0; z-index: 5; pointer-events: none; animation: rv-smoke-rise .9s ease-out forwards; }
+  @keyframes rv-smoke-rise { 0%{opacity:.8;transform:translate(-50%,-50%) scale(.2);} 100%{opacity:0;transform:translate(calc(-50% + var(--smx)), calc(-50% + var(--smy))) scale(3);} }
+  .rv-number {
+    position: relative; z-index: 6; font-size: 23px; font-weight: 800; letter-spacing: 4px; color: #4ade80;
+    text-shadow: 0 0 28px rgba(74,222,128,.95), 0 0 10px rgba(74,222,128,.55);
+    opacity: 0; pointer-events: none; animation: rv-num-pop .65s cubic-bezier(.34,1.56,.64,1) 1.12s forwards;
   }
-  @keyframes shrapnel-fly {
-    0%   { transform: translate(-50%,-50%) scale(1.4); opacity: 1; }
-    100% { transform: translate(calc(-50% + var(--sx)), calc(-50% + var(--sy))) scale(0); opacity: 0; }
-  }
-  .bomb-smoke {
-    position: absolute;
-    width: 30px; height: 30px;
-    border-radius: 50%;
-    background: rgba(180,180,180,0.3);
-    left: 50%; top: 50%;
-    opacity: 0;
-    animation: smoke-rise 0.8s ease-out 0.5s forwards;
-  }
-  @keyframes smoke-rise {
-    0%   { transform: translate(-50%,-50%) scale(0.2); opacity: 0.7; }
-    100% { transform: translate(calc(-50% + var(--smx)), calc(-50% + var(--smy))) scale(2.5); opacity: 0; }
-  }
-  .bomb-number-reveal {
-    position: relative;
-    z-index: 6;
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: 4px;
-    color: #4ade80;
-    text-shadow: 0 0 24px rgba(74,222,128,0.9), 0 0 8px rgba(74,222,128,0.5);
-    opacity: 0;
-    animation: num-bomb-pop 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.78s forwards;
-  }
-  @keyframes num-bomb-pop {
-    0%   { transform: scale(0.05) rotate(-8deg); opacity: 0; }
-    55%  { transform: scale(1.2) rotate(2deg); opacity: 1; }
-    75%  { transform: scale(0.95) rotate(-1deg); }
-    100% { transform: scale(1) rotate(0deg); opacity: 1; }
-  }
+  @keyframes rv-num-pop { 0%{transform:scale(.04) rotate(-6deg);opacity:0;} 55%{transform:scale(1.18) rotate(1.5deg);opacity:1;} 75%{transform:scale(.96) rotate(-.5deg);} 100%{transform:scale(1) rotate(0deg);opacity:1;} }
+  .wallet-item-code-wrap { position:relative; display:flex; justify-content:center; align-items:center; padding:22px 10px; margin-bottom:12px; overflow:hidden; background:rgba(0,0,0,.15); border-radius:12px; }
+  .wallet-item-code { font-size:23px; font-weight:800; letter-spacing:4px; color:#4ade80; text-shadow:0 0 18px rgba(74,222,128,.6); }
 
-  /* Static code display (already seen) */
-  .wallet-item-code-wrap {
-    position: relative; display: flex; justify-content: center; align-items: center;
-    padding: 22px 10px; margin-bottom: 12px; overflow: hidden;
-    background: rgba(0,0,0,0.15); border-radius: 12px;
-  }
-  .wallet-item-code {
-    font-size: 24px; font-weight: 800; letter-spacing: 4px; color: #4ade80;
-    text-shadow: 0 0 18px rgba(74,222,128,0.6);
-  }
+  /* ── Loaders ── */
+  #bootLoader { min-height:100vh; display:flex; align-items:center; justify-content:center; }
+  .flower-spinner { position:relative; width:56px; height:56px; }
+  .flower-spinner .petal { position:absolute; top:0; left:50%; width:8px; height:20px; margin-left:-4px; border-radius:4px; background:var(--accent); transform-origin:4px 28px; animation:petal-fade 1s linear infinite; }
+  .flower-spinner .petal:nth-child(1){transform:rotate(0deg);  animation-delay:-.875s}
+  .flower-spinner .petal:nth-child(2){transform:rotate(45deg); animation-delay:-.75s}
+  .flower-spinner .petal:nth-child(3){transform:rotate(90deg); animation-delay:-.625s}
+  .flower-spinner .petal:nth-child(4){transform:rotate(135deg);animation-delay:-.5s}
+  .flower-spinner .petal:nth-child(5){transform:rotate(180deg);animation-delay:-.375s}
+  .flower-spinner .petal:nth-child(6){transform:rotate(225deg);animation-delay:-.25s}
+  .flower-spinner .petal:nth-child(7){transform:rotate(270deg);animation-delay:-.125s}
+  .flower-spinner .petal:nth-child(8){transform:rotate(315deg);animation-delay:0s}
+  @keyframes petal-fade { 0%{opacity:1} 100%{opacity:.15} }
+  #authLoader { position:fixed; inset:0; background:rgba(15,23,42,.92); display:flex; align-items:center; justify-content:center; z-index:999; }
 
-  .wallet-generate-btn {
-    width: 100%; background: var(--accent); color: #fff; border: none; padding: 10px;
-    border-radius: 10px; font-size: 13.5px; font-weight: 700; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-  }
-  .wallet-generate-btn:hover { background: var(--accent-hover); }
-  .wallet-generate-btn:disabled { opacity: 0.85; cursor: not-allowed; }
-  .wallet-row-actions { display: flex; gap: 8px; }
-  .verify-row { display: flex; gap: 8px; }
-  .verify-input {
-    flex: 1; background: var(--bg); border: 1px solid var(--border); color: var(--text);
-    padding: 10px 12px; border-radius: 10px; font-size: 14px; letter-spacing: 2px; outline: none;
-  }
-  .verify-input:focus { border-color: var(--accent); }
-  .verify-btn {
-    flex: 0 0 auto; background: var(--accent); color: #fff; border: none;
-    padding: 10px 16px; border-radius: 10px; font-size: 13.5px; font-weight: 700; cursor: pointer;
-  }
-  .verify-btn:hover { background: var(--accent-hover); }
-  .wallet-reset-btn {
-    flex: 0 0 auto; background: var(--panel-glass); border: 1px solid var(--border);
-    color: var(--text-dim); padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
-  }
-  .wallet-reset-btn:hover { color: var(--text); border-color: var(--danger); }
-  .wallet-delete-btn {
-    flex: 0 0 auto; background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35);
-    color: var(--danger); padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer;
-  }
-  .wallet-delete-btn:hover { background: var(--danger); color: #fff; }
-  .wallet-contact-btn {
-    width: 100%; background: #25d366; color: #06280f; border: none;
-    padding: 11px; border-radius: 10px; font-size: 13.5px; font-weight: 700; cursor: pointer;
-  }
-  .wallet-contact-btn:hover { background: #1ebe5a; }
-  .btn-spinner {
-    width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.35); border-top-color: #fff;
-    border-radius: 50%; animation: btn-spin 0.7s linear infinite; display: inline-block;
-  }
-  @keyframes btn-spin { to { transform: rotate(360deg); } }
-  .wallet-empty { text-align: center; color: var(--text-dim); font-size: 14px; padding: 30px 10px; }
+  /* ── Modal ── */
+  #appModalOverlay { position:fixed; inset:0; background:rgba(8,12,22,.6); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; padding:24px; z-index:1000; opacity:0; pointer-events:none; transition:opacity .2s ease; }
+  #appModalOverlay.show { opacity:1; pointer-events:auto; }
+  .app-modal { width:100%; max-width:340px; background:var(--panel-glass); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid var(--border); border-radius:20px; padding:28px 24px 22px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.5); transform:translateY(10px) scale(.96); opacity:0; transition:transform .25s cubic-bezier(.22,1,.36,1), opacity .2s ease; }
+  #appModalOverlay.show .app-modal { transform:none; opacity:1; }
+  .app-modal-icon { width:56px; height:56px; margin:0 auto 14px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:26px; }
+  .app-modal-icon.success { background:rgba(74,222,128,.14); }
+  .app-modal-icon.error   { background:rgba(239,68,68,.14); }
+  .app-modal-icon.info    { background:rgba(59,130,246,.14); }
+  .app-modal-title   { font-size:17px; font-weight:700; margin-bottom:8px; }
+  .app-modal-message { font-size:13.5px; color:var(--text-dim); line-height:1.5; margin-bottom:22px; }
+  .app-modal-btn { width:100%; background:var(--accent); color:#fff; border:none; padding:12px; border-radius:10px; font-size:14.5px; font-weight:700; cursor:pointer; transition:background .15s ease, transform .1s ease; }
+  .app-modal-btn:hover { background:var(--accent-hover); transform:translateY(-1px); }
+  .app-modal-btn:active { transform:none; }
+  .app-modal-btn.danger { background:var(--danger); }
+  .app-modal-btn.danger:hover { background:var(--danger-hover); }
+  .app-modal-btn.secondary { background:transparent; border:1px solid var(--border); color:var(--text-dim); margin-top:8px; }
+  .app-modal-btn.secondary:hover { color:var(--text); border-color:var(--accent); }
 
-  /* ---------- Boot Loader ---------- */
-  #bootLoader { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-  .flower-spinner { position: relative; width: 56px; height: 56px; }
-  .flower-spinner .petal {
-    position: absolute; top: 0; left: 50%; width: 8px; height: 20px; margin-left: -4px;
-    border-radius: 4px; background: var(--accent); transform-origin: 4px 28px;
-    animation: petal-fade 1s linear infinite;
-  }
-  .flower-spinner .petal:nth-child(1) { transform: rotate(0deg);   animation-delay: -0.875s; }
-  .flower-spinner .petal:nth-child(2) { transform: rotate(45deg);  animation-delay: -0.75s; }
-  .flower-spinner .petal:nth-child(3) { transform: rotate(90deg);  animation-delay: -0.625s; }
-  .flower-spinner .petal:nth-child(4) { transform: rotate(135deg); animation-delay: -0.5s; }
-  .flower-spinner .petal:nth-child(5) { transform: rotate(180deg); animation-delay: -0.375s; }
-  .flower-spinner .petal:nth-child(6) { transform: rotate(225deg); animation-delay: -0.25s; }
-  .flower-spinner .petal:nth-child(7) { transform: rotate(270deg); animation-delay: -0.125s; }
-  .flower-spinner .petal:nth-child(8) { transform: rotate(315deg); animation-delay: 0s; }
-  @keyframes petal-fade { 0% { opacity: 1; } 100% { opacity: 0.15; } }
-
-  #authLoader {
-    position: fixed; inset: 0; background: rgba(15,23,42,0.92);
-    display: flex; align-items: center; justify-content: center; z-index: 999;
-  }
-
-  /* ---------- Modal ---------- */
-  #appModalOverlay {
-    position: fixed; inset: 0; background: rgba(8,12,22,0.6); backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center;
-    padding: 24px; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
-  }
-  #appModalOverlay.show { opacity: 1; pointer-events: auto; }
-  .app-modal {
-    width: 100%; max-width: 340px; background: var(--panel-glass); backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: 20px;
-    padding: 28px 24px 22px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    transform: translateY(10px) scale(0.96); opacity: 0;
-    transition: transform 0.25s cubic-bezier(0.22,1,0.36,1), opacity 0.2s ease;
-  }
-  #appModalOverlay.show .app-modal { transform: translateY(0) scale(1); opacity: 1; }
-  .app-modal-icon { width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 26px; }
-  .app-modal-icon.success { background: rgba(74,222,128,0.14); }
-  .app-modal-icon.error { background: rgba(239,68,68,0.14); }
-  .app-modal-icon.info { background: rgba(59,130,246,0.14); }
-  .app-modal-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
-  .app-modal-message { font-size: 13.5px; color: var(--text-dim); line-height: 1.5; margin-bottom: 22px; }
-  .app-modal-btn {
-    width: 100%; background: var(--accent); color: #fff; border: none; padding: 12px;
-    border-radius: 10px; font-size: 14.5px; font-weight: 700; cursor: pointer;
-    transition: background 0.15s ease, transform 0.1s ease;
-  }
-  .app-modal-btn:hover { background: var(--accent-hover); transform: translateY(-1px); }
-  .app-modal-btn:active { transform: translateY(0); }
-  .app-modal-btn.danger { background: var(--danger); }
-  .app-modal-btn.danger:hover { background: var(--danger-hover); }
-  .app-modal-btn.secondary { background: transparent; border: 1px solid var(--border); color: var(--text-dim); margin-top: 8px; }
-  .app-modal-btn.secondary:hover { color: var(--text); border-color: var(--accent); }
-
-  @media (max-width: 380px) {
-    .recharge-card .amount { font-size: 13px; }
-    .bomb-number-reveal, .wallet-item-code { font-size: 19px; }
+  @media(max-width:380px) {
+    .rcard { width:220px; height:124px; }
+    .rv-number, .wallet-item-code { font-size:18px; letter-spacing:2px; }
   }
 </style>
 </head>
 <body>
 
-  <!-- MODAL -->
-  <div id="appModalOverlay">
-    <div class="app-modal">
-      <div class="app-modal-icon" id="appModalIcon">✓</div>
-      <div class="app-modal-title" id="appModalTitle">Title</div>
-      <div class="app-modal-message" id="appModalMessage">Message</div>
-      <button type="button" class="app-modal-btn" id="appModalPrimaryBtn">OK</button>
-      <button type="button" class="app-modal-btn secondary hidden" id="appModalSecondaryBtn">Cancel</button>
+<!-- MODAL -->
+<div id="appModalOverlay">
+  <div class="app-modal">
+    <div class="app-modal-icon" id="appModalIcon">✓</div>
+    <div class="app-modal-title" id="appModalTitle"></div>
+    <div class="app-modal-message" id="appModalMessage"></div>
+    <button type="button" class="app-modal-btn" id="appModalPrimaryBtn">OK</button>
+    <button type="button" class="app-modal-btn secondary hidden" id="appModalSecondaryBtn">Cancel</button>
+  </div>
+</div>
+
+<!-- BOOT LOADER -->
+<div id="bootLoader">
+  <div class="flower-spinner">
+    <div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div>
+    <div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div>
+  </div>
+</div>
+
+<!-- AUTH LOADER -->
+<div id="authLoader" class="hidden">
+  <div class="flower-spinner">
+    <div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div>
+    <div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen" class="hidden">
+  <div class="auth-stage">
+    <div class="login-card">
+      <div class="logo">⚡</div>
+      <h1 id="authHeading">Digital Recharge</h1>
+      <p class="subtitle" id="authSubtitle">Sign in to continue to your dashboard</p>
+      <button type="button" class="google-btn-fake" id="googleSignInBtn" style="position:static;">
+        <svg width="18" height="18" viewBox="0 0 18 18" style="margin-right:8px;"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.71A5.4 5.4 0 0 1 3.69 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.59-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+        Continue with Google
+      </button>
+      <p class="hint" style="margin-top:14px;">Secured by Firebase Authentication — works from any device.</p>
     </div>
   </div>
+</div>
 
-  <!-- BOOT LOADER -->
-  <div id="bootLoader">
-    <div class="flower-spinner">
-      <div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div>
-      <div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div>
+<!-- APP -->
+<div id="appScreen" class="hidden">
+  <header>
+    <h2>Digital Recharge</h2>
+    <div class="header-actions">
+      <div class="balance-pill" id="balancePill">LKR 0.00</div>
+      <div class="account-wrap">
+        <button id="accountBtn">👤 ▾</button>
+        <div id="accountDropdown" class="hidden">
+          <div class="user-name" id="userNameLabel">—</div>
+          <button id="logoutBtn">Logout</button>
+        </div>
+      </div>
     </div>
+  </header>
+
+  <div class="subnav">
+    <button id="navDashboard" class="active">💳 Buy Cards</button>
+    <button id="navTopup">➕ Add Funds</button>
+    <button id="navHistory">🗂 My Cards</button>
   </div>
 
-  <!-- AUTH LOADER -->
-  <div id="authLoader" class="hidden">
-    <div class="flower-spinner">
-      <div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div>
-      <div class="petal"></div><div class="petal"></div><div class="petal"></div><div class="petal"></div>
-    </div>
-  </div>
+  <main>
+    <div class="container">
 
-  <!-- LOGIN SCREEN -->
-  <div id="loginScreen" class="hidden">
-    <div class="auth-stage">
-      <div class="login-card">
-        <div class="logo">⚡</div>
-        <h1 id="authHeading">Digital Recharge</h1>
-        <p class="subtitle" id="authSubtitle">Sign in to continue to your dashboard</p>
+      <!-- DASHBOARD (buy cards) -->
+      <div id="dashboardView">
+        <div class="panel">
+          <h3>Select a recharge amount</h3>
+          <div class="card-grid" id="cardGrid"></div>
+        </div>
+      </div>
 
-        <button type="button" class="google-btn-fake" id="googleSignInBtn" style="position:static;">
-          <svg width="18" height="18" viewBox="0 0 18 18" style="margin-right:8px;"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.71H.96v2.33A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.97 10.71A5.4 5.4 0 0 1 3.69 9c0-.59.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.46 3.44 1.35l2.59-2.59C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
-          Continue with Google
-        </button>
-        <div class="auth-divider"><span>or</span></div>
-
-        <div class="auth-panels">
-          <!-- SIGN IN -->
-          <div class="auth-panel" id="signInPanel">
-            <form id="emailAuthForm" autocomplete="off">
-              <div class="field"><input type="email" id="authEmail" class="auth-input" placeholder="Email" required /></div>
-              <div class="field">
-                <input type="password" id="authPassword" class="auth-input" placeholder="Password" required minlength="6" />
-                <button type="button" class="field-toggle" data-target="authPassword">SHOW</button>
-              </div>
-              <div id="authError" class="auth-error"></div>
-              <button type="submit" id="authSignInBtn" class="auth-primary-btn">Sign In</button>
-              <button type="button" id="authCreateBtn" class="auth-secondary-btn">Create an Account</button>
-            </form>
+      <div id="selectedView" class="hidden">
+        <button class="back-btn" id="backBtn">← Back</button>
+        <div class="panel">
+          <div class="selected-amount-display">
+            <div class="label">Selected Card</div>
+            <div class="value" id="selectedAmountLabel">—</div>
+            <div class="balance-note" id="selectedBalanceNote">Wallet balance: LKR 0.00</div>
           </div>
+          <button id="buyBtn">Buy Now</button>
+          <p class="hint" id="buyHint">This will be deducted from your wallet balance and your card will be revealed instantly.</p>
+        </div>
+      </div>
 
-          <!-- SIGN UP -->
-          <div class="auth-panel hidden" id="signUpPanel">
-            <form id="signUpForm" autocomplete="off">
-              <div class="field"><input type="email" id="suEmail" class="auth-input" placeholder="Email" required /></div>
-              <div class="field">
-                <input type="password" id="suPassword" class="auth-input" placeholder="Password" required minlength="6" />
-                <button type="button" class="field-toggle" data-target="suPassword">SHOW</button>
-                <div class="strength-wrap"><div class="strength-bar" id="strengthBar"></div></div>
-                <div class="strength-label" id="strengthLabel">&nbsp;</div>
-              </div>
-              <div class="field">
-                <input type="password" id="suConfirm" class="auth-input" placeholder="Confirm password" required minlength="6" />
-                <button type="button" class="field-toggle" data-target="suConfirm">SHOW</button>
-                <div class="match-hint" id="matchHint">&nbsp;</div>
-              </div>
-              <div id="signUpError" class="auth-error"></div>
-              <div id="signUpSuccess" class="auth-success"></div>
-              <button type="submit" id="signUpBtn" class="auth-primary-btn">Create Account</button>
-              <button type="button" id="backToSignInBtn" class="auth-secondary-btn">← Back to Sign In</button>
-            </form>
-          </div>
-
-          <!-- VERIFY EMAIL -->
-          <div class="auth-panel hidden" id="verifyPanel">
-            <div class="success-burst" style="background: rgba(59,130,246,0.12);">
-              <svg viewBox="0 0 24 24" fill="none" style="width:30px;height:30px;">
-                <path d="M3 6l9 7 9-7" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <rect x="3" y="5" width="18" height="14" rx="2" stroke="#3b82f6" stroke-width="2"/>
-              </svg>
+      <!-- ADD FUNDS (EZ Cash reference) -->
+      <div id="topupView" class="hidden">
+        <div class="panel">
+          <h3>My Wallet Balance</h3>
+          <div style="text-align:center;font-size:30px;font-weight:800;color:var(--success);margin-bottom:4px;" id="topupBalanceLabel">LKR 0.00</div>
+        </div>
+        <div class="panel">
+          <h3>Add Funds via EZ Cash</h3>
+          <div class="ezcash-box">
+            <div class="store-name">DIGITAL RECHARGE</div>
+            <div class="ezcash-label">EZ CASH NUMBER</div>
+            <div class="ezcash-number">0772915479</div>
+            <div class="ezcash-note">
+              Send money to the EZ Cash number above.<br/><br/>
+              After sending, EZ Cash will text <b>you</b> a Reference Number. Enter that <b>exact amount</b> and <b>Reference Number</b> below and we'll add it to your wallet automatically — no need to contact us.
             </div>
-            <p class="hint" style="margin-top:0; margin-bottom:16px;">
-              We sent a verification link to <strong id="verifyEmailLabel">your email</strong>. Open it, tap the link, then come back and press the button below.
-            </p>
-            <div id="verifyError" class="auth-error"></div>
-            <div id="verifySuccess" class="auth-success"></div>
-            <button type="button" id="checkVerifiedBtn" class="auth-primary-btn">I've verified — Continue</button>
-            <button type="button" id="resendVerifyBtn" class="auth-secondary-btn">Resend email</button>
-            <button type="button" id="useOtherAccountBtn" class="auth-secondary-btn" style="margin-top:8px;">Use a different account</button>
           </div>
-        </div>
 
-        <p class="hint" style="margin-top:14px;">Secured by Firebase Authentication — works from any device.</p>
-      </div>
-    </div>
-  </div>
+          <div id="topupForm">
+            <label class="field-label">Amount sent (LKR)</label>
+            <div class="field"><input type="number" id="topupAmount" class="auth-input" placeholder="e.g., 500" min="1" /></div>
 
-  <!-- APP SCREEN -->
-  <div id="appScreen" class="hidden">
-    <header>
-      <h2>Digital Recharge</h2>
-      <div style="display:flex; align-items:center; gap:8px;">
-        <button id="walletNavBtn">🛒 Wallet</button>
-        <div class="account-wrap">
-          <button id="accountBtn">👤 Account ▾</button>
-          <div id="accountDropdown" class="hidden">
-            <div class="user-name" id="userNameLabel">—</div>
-            <button id="logoutBtn">Logout</button>
-          </div>
-        </div>
-      </div>
-    </header>
-    <main>
-      <div class="container">
-        <div id="dashboardView">
-          <div class="panel">
-            <h3>Select a recharge amount</h3>
-            <div class="card-grid" id="cardGrid"></div>
-          </div>
-        </div>
-        <div id="selectedView" class="hidden">
-          <button class="back-btn" id="backBtn">← Back</button>
-          <div class="panel">
-            <div class="selected-amount-display">
-              <div class="label">Selected Card</div>
-              <div class="value" id="selectedAmountLabel">—</div>
+            <label class="field-label">Reference Number (from your EZ Cash SMS)</label>
+            <div class="field"><input type="text" id="topupRef" class="auth-input" inputmode="numeric" placeholder="e.g., 35428907282" /></div>
+
+            <div id="topupError" class="auth-error"></div>
+
+            <button type="button" id="topupSubmitBtn">Check &amp; Add Funds</button>
+            <div class="topup-waiting" id="topupWaiting">
+              <div class="mini-spinner"></div>
+              <span>Waiting for EZ Cash confirmation… this updates automatically, no need to press again.</span>
             </div>
-            <button id="buyBtn">Buy Now</button>
-            <p class="hint">This will be added to your wallet. You can generate the payment code from there.</p>
           </div>
-        </div>
-        <div id="walletView" class="hidden">
-          <button class="back-btn" id="walletBackBtn">← Back</button>
-          <div class="panel">
-            <h3>My Wallet</h3>
-            <div id="walletList"></div>
+
+          <div class="topup-success" id="topupSuccess">
+            <div class="check-circle">✓</div>
+            <div class="amt" id="topupSuccessAmt">+LKR 0.00</div>
+            <p class="hint" style="margin-top:0;">Added to your wallet balance.</p>
+            <button type="button" class="auth-secondary-btn" id="topupAddAnotherBtn" style="margin-top:14px;">Add another top-up</button>
           </div>
         </div>
       </div>
-    </main>
-  </div>
+
+      <!-- MY CARDS (purchase history) -->
+      <div id="walletView" class="hidden">
+        <div class="panel">
+          <h3>My Cards</h3>
+          <div id="walletList"></div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import {
-    getAuth, GoogleAuthProvider, signInWithPopup,
-    createUserWithEmailAndPassword, signInWithEmailAndPassword,
-    onAuthStateChanged, signOut, updateProfile,
-    sendEmailVerification, reload
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import {
-    getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc
-  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, runTransaction, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyA0bGI0PErs56jTIjW_3P4-2bgwEIRfBTI",
-    authDomain: "recharge-card-79265.firebaseapp.com",
-    projectId: "recharge-card-79265",
-    storageBucket: "recharge-card-79265.firebasestorage.app",
-    messagingSenderId: "619828501430",
-    appId: "1:619828501430:web:0ac8da4d3d7ce0d020bf17",
-    measurementId: "G-093TL9ZJYK"
-  };
+const firebaseConfig = {
+  apiKey:"AIzaSyA0bGI0PErs56jTIjW_3P4-2bgwEIRfBTI",
+  authDomain:"recharge-card-79265.firebaseapp.com",
+  projectId:"recharge-card-79265",
+  storageBucket:"recharge-card-79265.firebasestorage.app",
+  messagingSenderId:"619828501430",
+  appId:"1:619828501430:web:0ac8da4d3d7ce0d020bf17",
+  measurementId:"G-093TL9ZJYK"
+};
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const googleProvider = new GoogleAuthProvider();
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
 
-  (function () {
-    "use strict";
+/* The EZ Cash merchant number funds should be sent to. */
+const EZCASH_MERCHANT_NUMBER = "0772915479";
 
-    let currentUser = null;
-    let selectedCard = null;
-    let wallet = [];
-    // Track items that were just verified this session — gets bomb animation
-    let recentlyVerified = new Set();
+(function(){
+"use strict";
 
-    // DOM refs
-    const bootLoader = document.getElementById("bootLoader");
-    const appModalOverlay = document.getElementById("appModalOverlay");
-    const appModalIcon = document.getElementById("appModalIcon");
-    const appModalTitle = document.getElementById("appModalTitle");
-    const appModalMessage = document.getElementById("appModalMessage");
-    const appModalPrimaryBtn = document.getElementById("appModalPrimaryBtn");
-    const appModalSecondaryBtn = document.getElementById("appModalSecondaryBtn");
-    const authLoader = document.getElementById("authLoader");
-    const loginScreen = document.getElementById("loginScreen");
-    const appScreen = document.getElementById("appScreen");
-    const accountBtn = document.getElementById("accountBtn");
-    const accountDropdown = document.getElementById("accountDropdown");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const userNameLabel = document.getElementById("userNameLabel");
-    const walletNavBtn = document.getElementById("walletNavBtn");
-    const dashboardView = document.getElementById("dashboardView");
-    const selectedView = document.getElementById("selectedView");
-    const walletView = document.getElementById("walletView");
-    const cardGrid = document.getElementById("cardGrid");
-    const selectedAmountLabel = document.getElementById("selectedAmountLabel");
-    const buyBtn = document.getElementById("buyBtn");
-    const backBtn = document.getElementById("backBtn");
-    const walletBackBtn = document.getElementById("walletBackBtn");
-    const walletList = document.getElementById("walletList");
-    const googleSignInBtn = document.getElementById("googleSignInBtn");
-    const authHeading = document.getElementById("authHeading");
-    const authSubtitle = document.getElementById("authSubtitle");
-    const signInPanel = document.getElementById("signInPanel");
-    const signUpPanel = document.getElementById("signUpPanel");
-    const emailAuthForm = document.getElementById("emailAuthForm");
-    const authEmail = document.getElementById("authEmail");
-    const authPassword = document.getElementById("authPassword");
-    const authError = document.getElementById("authError");
-    const authSignInBtn = document.getElementById("authSignInBtn");
-    const authCreateBtn = document.getElementById("authCreateBtn");
-    const signUpForm = document.getElementById("signUpForm");
-    const suEmail = document.getElementById("suEmail");
-    const suPassword = document.getElementById("suPassword");
-    const suConfirm = document.getElementById("suConfirm");
-    const strengthBar = document.getElementById("strengthBar");
-    const strengthLabel = document.getElementById("strengthLabel");
-    const matchHint = document.getElementById("matchHint");
-    const signUpError = document.getElementById("signUpError");
-    const signUpSuccess = document.getElementById("signUpSuccess");
-    const signUpBtn = document.getElementById("signUpBtn");
-    const backToSignInBtn = document.getElementById("backToSignInBtn");
-    const verifyPanel = document.getElementById("verifyPanel");
-    const verifyEmailLabel = document.getElementById("verifyEmailLabel");
-    const verifyError = document.getElementById("verifyError");
-    const verifySuccess = document.getElementById("verifySuccess");
-    const checkVerifiedBtn = document.getElementById("checkVerifiedBtn");
-    const resendVerifyBtn = document.getElementById("resendVerifyBtn");
-    const useOtherAccountBtn = document.getElementById("useOtherAccountBtn");
-    let pendingVerifyUser = null;
+let currentUser = null, selectedCard = null, wallet = [], walletBalance = 0;
+let recentlyPurchased = new Set(); // items bought this session → play reveal animation
+let refListenerUnsub = null;
 
-    // ---------- Modal ----------
-    const ICONS = { success: "✓", error: "✕", info: "ℹ" };
-    function showModal({ type = "info", title, message, okText = "OK" }) {
-      return new Promise((resolve) => {
-        appModalIcon.className = "app-modal-icon " + type;
-        appModalIcon.textContent = ICONS[type] || ICONS.info;
-        appModalTitle.textContent = title || "";
-        appModalMessage.textContent = message || "";
-        appModalPrimaryBtn.textContent = okText;
-        appModalPrimaryBtn.className = "app-modal-btn" + (type === "error" ? " danger" : "");
-        appModalSecondaryBtn.classList.add("hidden");
-        function cleanup() { appModalOverlay.classList.remove("show"); appModalPrimaryBtn.removeEventListener("click", onOk); }
-        function onOk() { cleanup(); resolve(true); }
-        appModalPrimaryBtn.addEventListener("click", onOk);
-        appModalOverlay.classList.add("show");
-      });
-    }
-    function showConfirm({ title, message, okText = "Confirm", cancelText = "Cancel", danger = false }) {
-      return new Promise((resolve) => {
-        appModalIcon.className = "app-modal-icon " + (danger ? "error" : "info");
-        appModalIcon.textContent = danger ? ICONS.error : ICONS.info;
-        appModalTitle.textContent = title || "";
-        appModalMessage.textContent = message || "";
-        appModalPrimaryBtn.textContent = okText;
-        appModalPrimaryBtn.className = "app-modal-btn" + (danger ? " danger" : "");
-        appModalSecondaryBtn.textContent = cancelText;
-        appModalSecondaryBtn.classList.remove("hidden");
-        function cleanup() {
-          appModalOverlay.classList.remove("show");
-          appModalPrimaryBtn.removeEventListener("click", onOk);
-          appModalSecondaryBtn.removeEventListener("click", onCancel);
-        }
-        function onOk() { cleanup(); resolve(true); }
-        function onCancel() { cleanup(); resolve(false); }
-        appModalPrimaryBtn.addEventListener("click", onOk);
-        appModalSecondaryBtn.addEventListener("click", onCancel);
-        appModalOverlay.classList.add("show");
-      });
-    }
+/* ─── DOM ─── */
+const $ = id => document.getElementById(id);
+const bootLoader=$("bootLoader"), appModalOverlay=$("appModalOverlay"), appModalIcon=$("appModalIcon"),
+      appModalTitle=$("appModalTitle"), appModalMessage=$("appModalMessage"),
+      appModalPrimaryBtn=$("appModalPrimaryBtn"), appModalSecondaryBtn=$("appModalSecondaryBtn"),
+      authLoader=$("authLoader"), loginScreen=$("loginScreen"), appScreen=$("appScreen"),
+      accountBtn=$("accountBtn"), accountDropdown=$("accountDropdown"), logoutBtn=$("logoutBtn"),
+      userNameLabel=$("userNameLabel"), balancePill=$("balancePill"),
+      navDashboard=$("navDashboard"), navTopup=$("navTopup"), navHistory=$("navHistory"),
+      dashboardView=$("dashboardView"), selectedView=$("selectedView"), topupView=$("topupView"), walletView=$("walletView"),
+      cardGrid=$("cardGrid"), selectedAmountLabel=$("selectedAmountLabel"), selectedBalanceNote=$("selectedBalanceNote"),
+      buyBtn=$("buyBtn"), buyHint=$("buyHint"),
+      backBtn=$("backBtn"), walletList=$("walletList"),
+      googleSignInBtn=$("googleSignInBtn"), authHeading=$("authHeading"), authSubtitle=$("authSubtitle"),
+      topupBalanceLabel=$("topupBalanceLabel"), topupForm=$("topupForm"), topupAmount=$("topupAmount"),
+      topupRef=$("topupRef"), topupError=$("topupError"), topupSubmitBtn=$("topupSubmitBtn"),
+      topupWaiting=$("topupWaiting"), topupSuccess=$("topupSuccess"), topupSuccessAmt=$("topupSuccessAmt"),
+      topupAddAnotherBtn=$("topupAddAnotherBtn");
 
-    // ---------- EmailJS ----------
-    if (window.emailjs) { emailjs.init({ publicKey: CONFIG.EMAILJS_PUBLIC_KEY }); }
+/* ─── Modal ─── */
+const ICONS = {success:"✓",error:"✕",info:"ℹ"};
+function showModal({type="info",title,message,okText="OK"}){
+  return new Promise(resolve=>{
+    appModalIcon.className="app-modal-icon "+type;
+    appModalIcon.textContent=ICONS[type]||ICONS.info;
+    appModalTitle.textContent=title||"";
+    appModalMessage.textContent=message||"";
+    appModalPrimaryBtn.textContent=okText;
+    appModalPrimaryBtn.className="app-modal-btn"+(type==="error"?" danger":"");
+    appModalSecondaryBtn.classList.add("hidden");
+    const onOk=()=>{ appModalOverlay.classList.remove("show"); appModalPrimaryBtn.removeEventListener("click",onOk); resolve(true); };
+    appModalPrimaryBtn.addEventListener("click",onOk);
+    appModalOverlay.classList.add("show");
+  });
+}
 
-    // ---------- Password toggles ----------
-    document.querySelectorAll(".field-toggle").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const target = document.getElementById(btn.getAttribute("data-target"));
-        if (!target) return;
-        const isPw = target.type === "password";
-        target.type = isPw ? "text" : "password";
-        btn.textContent = isPw ? "HIDE" : "SHOW";
-      });
+function friendlyAuthError(err){
+  const c=err&&err.code?err.code:"";
+  if(c==="auth/popup-closed-by-user") return "Google sign-in was cancelled.";
+  return (err&&err.message)||"Something went wrong. Please try again.";
+}
+
+/* ─── Google sign-in ─── */
+googleSignInBtn.addEventListener("click",async()=>{
+  googleSignInBtn.disabled=true;
+  try{ await signInWithPopup(auth,googleProvider); }
+  catch(err){ console.error(err); await showModal({type:"error",title:"Sign-in failed",message:friendlyAuthError(err)}); }
+  finally{ googleSignInBtn.disabled=false; }
+});
+logoutBtn.addEventListener("click",async()=>{ accountDropdown.classList.add("hidden"); try{ await signOut(auth); }catch(e){} });
+
+/* ─── Firestore refs ─── */
+const walletDocRef  = () => doc(db,"wallets",currentUser.uid);
+const walletColRef  = () => collection(db,"wallets",currentUser.uid,"items");
+const refDocRef     = (refId) => doc(db,"verifiedRefs",refId);
+
+async function loadWalletBalance(){
+  try{ const s=await getDoc(walletDocRef()); walletBalance = s.exists()? (s.data().balance||0) : 0; }
+  catch(e){ console.error(e); walletBalance = 0; }
+  renderBalance();
+}
+function renderBalance(bump){
+  const txt = "LKR " + walletBalance.toFixed(2);
+  balancePill.textContent = txt;
+  if(topupBalanceLabel) topupBalanceLabel.textContent = txt;
+  if(selectedBalanceNote) selectedBalanceNote.textContent = "Wallet balance: " + txt;
+  if(bump){ balancePill.classList.remove("bump"); void balancePill.offsetWidth; balancePill.classList.add("bump"); }
+}
+
+async function loadWalletItems(){
+  wallet=[];
+  try{ const s=await getDocs(walletColRef()); wallet=s.docs.map(d=>({id:d.id,...d.data()})); wallet.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)); }
+  catch(e){ console.error(e); wallet=[]; }
+}
+async function saveWalletItem(item){ const{id,...data}=item; await setDoc(doc(walletColRef(),id),data); }
+
+async function isCardNumberUsed(n){ const s=await getDoc(doc(db,"usedCardNumbers",n)); return s.exists(); }
+async function markCardNumberUsed(n){ await setDoc(doc(db,"usedCardNumbers",n),{usedAt:new Date().toISOString()}); }
+async function releaseCardNumber(n){ if(!n) return; try{ await deleteDoc(doc(db,"usedCardNumbers",n)); }catch(e){ console.error(e); } }
+async function pickCardNumber(cardId){
+  const def=CONFIG.CARDS.find(c=>c.id===cardId);
+  if(!def||!Array.isArray(def.cardNumbers)) return null;
+  for(const n of def.cardNumbers){ if(!(await isCardNumberUsed(n))){ await markCardNumberUsed(n); return n; } }
+  return null;
+}
+
+/* ─── Card grid ─── */
+function renderCardGrid(){
+  cardGrid.innerHTML="";
+  CONFIG.CARDS.forEach(card=>{
+    const el=document.createElement("div"); el.className="recharge-card";
+    el.innerHTML=`<div class="icon">💳</div><div class="amount">${card.label}</div>`;
+    el.addEventListener("click",()=>selectCard(card)); cardGrid.appendChild(el);
+  });
+}
+function selectCard(card){
+  selectedCard=card; selectedAmountLabel.textContent=card.label;
+  renderBalance();
+  setActiveView("selected");
+  const affordable = walletBalance >= (card.amount||0);
+  buyBtn.disabled = !affordable;
+  buyHint.textContent = affordable
+    ? "This will be deducted from your wallet balance and your card will be revealed instantly."
+    : "Insufficient wallet balance for this card. Add funds first.";
+}
+backBtn.addEventListener("click",()=>{ setActiveView("dashboard"); selectedCard=null; });
+
+/* ─── Buy (instant, wallet-balance based) ─── */
+buyBtn.addEventListener("click",async()=>{
+  if(!selectedCard||!currentUser) return;
+  buyBtn.disabled=true; const orig=buyBtn.textContent; buyBtn.innerHTML='<span class="btn-spinner"></span> Processing...';
+
+  let cardNumber=null;
+  try{
+    cardNumber = await pickCardNumber(selectedCard.id);
+    if(!cardNumber){ throw {code:"out-of-stock"}; }
+
+    await runTransaction(db, async (tx)=>{
+      const wref = walletDocRef();
+      const wsnap = await tx.get(wref);
+      const bal = wsnap.exists() ? (wsnap.data().balance||0) : 0;
+      if(bal < selectedCard.amount){ throw {code:"insufficient-funds"}; }
+      tx.set(wref, {balance: bal - selectedCard.amount}, {merge:true});
     });
 
-    // ---------- Error helpers ----------
-    function showAuthError(msg) { authError.textContent = msg; authError.classList.add("show"); }
-    function clearAuthError() { authError.classList.remove("show"); setTimeout(() => { if (!authError.classList.contains("show")) authError.textContent = ""; }, 200); }
-    function showSignUpError(msg) { signUpSuccess.classList.remove("show"); signUpError.textContent = msg; signUpError.classList.add("show"); }
-    function clearSignUpError() { signUpError.classList.remove("show"); setTimeout(() => { if (!signUpError.classList.contains("show")) signUpError.textContent = ""; }, 200); }
-    function showSignUpSuccess(msg) { clearSignUpError(); signUpSuccess.textContent = msg; signUpSuccess.classList.add("show"); }
-    function friendlyAuthError(err) {
-      const code = err && err.code ? err.code : "";
-      if (code === "auth/email-already-in-use") return "An account with this email already exists. Try signing in instead.";
-      if (code === "auth/invalid-email") return "Please enter a valid email address.";
-      if (code === "auth/weak-password") return "Password should be at least 6 characters.";
-      if (code === "auth/user-not-found" || code === "auth/invalid-credential") return "No account found, or the password is incorrect.";
-      if (code === "auth/wrong-password") return "Incorrect password. Please try again.";
-      if (code === "auth/popup-closed-by-user") return "Google sign-in was cancelled.";
-      return (err && err.message) || "Something went wrong. Please try again.";
+    const item={
+      id:"wi_"+Date.now(), cardId:selectedCard.id, label:selectedCard.label, amount:selectedCard.amount,
+      cardNumber, status:"completed", createdAt:new Date().toISOString()
+    };
+    await saveWalletItem(item);
+    wallet.unshift(item);
+    recentlyPurchased.add(item.id);
+    walletBalance -= selectedCard.amount;
+    renderBalance(true);
+
+    setActiveView("history");
+    renderWallet();
+    selectedCard=null;
+  }catch(err){
+    console.error(err);
+    if(cardNumber && err && err.code!=="out-of-stock") await releaseCardNumber(cardNumber);
+    if(err && err.code==="insufficient-funds"){
+      await showModal({type:"error",title:"Insufficient balance",message:"Your wallet balance is too low for this card. Please add funds first."});
+    }else if(err && err.code==="out-of-stock"){
+      await showModal({type:"error",title:"Out of stock",message:"Sorry, all "+selectedCard.label+" cards are currently out of stock."});
+    }else{
+      await showModal({type:"error",title:"Purchase failed",message:"Please try again."});
     }
-    function flashFieldError(input) {
-      input.classList.remove("field-error");
-      void input.offsetWidth;
-      input.classList.add("field-error");
+  }finally{
+    buyBtn.disabled=false; buyBtn.textContent=orig;
+  }
+});
+
+/* ────────────────────────────────────────────────
+   BUILD CARD-TEAR + BOMB REVEAL HTML
+──────────────────────────────────────────────── */
+function makeRevealHtml(number, amountText){
+  const COLORS=['#fbbf24','#f97316','#ef4444','#4ade80','#60a5fa','#a78bfa','#f472b6','#fb923c','#34d399','#f87171','#fde68a','#6ee7b7'];
+  const topClip ='polygon(0 0,100% 0,106% 43%,88% 51%,64% 44%,42% 53%,18% 45%,-6% 54%)';
+  const botClip ='polygon(-6% 54%,18% 45%,42% 53%,64% 44%,88% 51%,106% 43%,100% 100%,0 100%)';
+  const inner=`
+    <div class="rcard-logo">⚡</div>
+    <div class="rcard-title">RECHARGE CARD</div>
+    <div class="rcard-amount">${amountText}</div>
+    <div class="rcard-scratch">▓ ▓ ▓ ▓ ▓ ▓ ▓ ▓</div>
+  `;
+  const particles=Array.from({length:22},(_,i)=>{
+    const angle=(360/22)*i+(Math.random()*10-5);
+    const dist=52+Math.random()*38;
+    const sx=Math.round(Math.cos(angle*Math.PI/180)*dist);
+    const sy=Math.round(Math.sin(angle*Math.PI/180)*dist);
+    const color=COLORS[i%COLORS.length];
+    const delay=(0.88+i*0.018).toFixed(3);
+    const sz=5+Math.round(Math.random()*6);
+    return `<span class="rv-particle" style="background:${color};width:${sz}px;height:${sz}px;--sx:${sx}px;--sy:${sy}px;animation-delay:${delay}s;"></span>`;
+  }).join('');
+  const smokes=Array.from({length:5},(_,i)=>{
+    const smx=Math.round((Math.random()-.5)*44);
+    const smy=Math.round(-30-Math.random()*35);
+    const delay=(0.9+i*0.07).toFixed(2);
+    return `<span class="rv-smoke" style="--smx:${smx}px;--smy:${smy}px;animation-delay:${delay}s;"></span>`;
+  }).join('');
+  return `
+    <div class="reveal-stage">
+      <div class="rcard rcard-full">${inner}</div>
+      <div class="rcard rcard-tear-top" style="clip-path:${topClip};">${inner}</div>
+      <div class="rcard rcard-tear-bottom" style="clip-path:${botClip};">${inner}</div>
+      <div class="rv-flash"></div>
+      ${particles}
+      ${smokes}
+      <div class="rv-number">${number}</div>
+    </div>
+  `;
+}
+
+/* ─── Render "My Cards" history ─── */
+function renderWallet(){
+  walletList.innerHTML="";
+  if(wallet.length===0){ walletList.innerHTML='<div class="wallet-empty">No cards yet. Buy a recharge card to get started.</div>'; return; }
+
+  wallet.forEach(item=>{
+    const el=document.createElement("div"); el.className="wallet-item";
+    const dateStr=new Date(item.createdAt).toLocaleString();
+    const amountText=item.amount?`${item.amount} LKR`:item.label;
+    const codeHtml = recentlyPurchased.has(item.id)
+      ? makeRevealHtml(item.cardNumber, amountText)
+      : `<div class="wallet-item-code-wrap"><div class="wallet-item-code">${item.cardNumber}</div></div>`;
+
+    el.innerHTML=`
+      <div class="wallet-item-top">
+        <div class="wallet-item-amount">${amountText}</div>
+        <div class="wallet-item-status sent">Completed</div>
+      </div>
+      <div class="wallet-item-date">${dateStr}</div>
+      ${codeHtml}
+    `;
+    walletList.appendChild(el);
+  });
+}
+
+/* ─── Add Funds (EZ Cash reference, auto-verified) ─── */
+function stopRefListener(){ if(refListenerUnsub){ refListenerUnsub(); refListenerUnsub=null; } }
+
+function resetTopupForm(){
+  stopRefListener();
+  topupForm.classList.remove("hidden");
+  topupSuccess.classList.remove("show");
+  topupWaiting.classList.remove("show");
+  topupError.classList.remove("show");
+  topupAmount.value=""; topupRef.value="";
+  topupSubmitBtn.disabled=false; topupSubmitBtn.textContent="Check & Add Funds";
+}
+topupAddAnotherBtn.addEventListener("click", resetTopupForm);
+
+async function creditWallet(amount){
+  await runTransaction(db, async (tx)=>{
+    const wref = walletDocRef();
+    const wsnap = await tx.get(wref);
+    const bal = wsnap.exists() ? (wsnap.data().balance||0) : 0;
+    tx.set(wref, {balance: bal + amount}, {merge:true});
+  });
+  walletBalance += amount;
+  renderBalance(true);
+}
+
+async function finishTopupSuccess(amount){
+  stopRefListener();
+  await creditWallet(amount);
+  topupForm.classList.add("hidden");
+  topupWaiting.classList.remove("show");
+  topupSuccessAmt.textContent = "+LKR " + amount.toFixed(2);
+  topupSuccess.classList.add("show");
+}
+
+topupSubmitBtn.addEventListener("click", async ()=>{
+  topupError.classList.remove("show");
+  const amount = parseFloat(topupAmount.value);
+  const refId = (topupRef.value||"").trim().replace(/\s+/g,"");
+  if(!amount || amount<=0){ topupError.textContent="Please enter the amount you sent."; topupError.classList.add("show"); return; }
+  if(!refId || !/^\d{6,20}$/.test(refId)){ topupError.textContent="Please enter a valid Reference Number from your EZ Cash SMS."; topupError.classList.add("show"); return; }
+
+  topupSubmitBtn.disabled=true; topupSubmitBtn.innerHTML='<span class="btn-spinner"></span> Checking...';
+  try{
+    const snap = await getDoc(refDocRef(refId));
+    if(snap.exists()){
+      const data = snap.data();
+      if(data.usedBy){ throw {code:"already-used"}; }
+      if(Number(data.amount) !== Number(amount)){ throw {code:"amount-mismatch"}; }
+      await setDoc(refDocRef(refId), {usedBy: currentUser.uid, usedAt:new Date().toISOString()}, {merge:true});
+      await finishTopupSuccess(amount);
+      return;
     }
-
-    // ---------- Google Sign In ----------
-    googleSignInBtn.addEventListener("click", async () => {
-      clearAuthError(); googleSignInBtn.disabled = true;
-      try { await signInWithPopup(auth, googleProvider); }
-      catch (err) { console.error(err); showAuthError(friendlyAuthError(err)); }
-      finally { googleSignInBtn.disabled = false; }
-    });
-
-    // ---------- Email Sign In ----------
-    emailAuthForm.addEventListener("submit", async (e) => {
-      e.preventDefault(); clearAuthError();
-      const email = authEmail.value.trim(); const password = authPassword.value;
-      if (!email || !password) return;
-      authSignInBtn.disabled = true;
-      authSignInBtn.innerHTML = '<span class="btn-spinner"></span> Signing in...';
-      try { await signInWithEmailAndPassword(auth, email, password); }
-      catch (err) { console.error(err); showAuthError(friendlyAuthError(err)); flashFieldError(authPassword); }
-      finally { authSignInBtn.disabled = false; authSignInBtn.textContent = "Sign In"; }
-    });
-
-    // ---------- Panel slides ----------
-    function goToSignUp() {
-      clearAuthError();
-      authHeading.textContent = "Create your account";
-      authSubtitle.textContent = "Sign up to start buying recharge cards";
-      slidePanels(signInPanel, signUpPanel, "forward");
-      suEmail.value = authEmail.value.trim(); suPassword.value = ""; suConfirm.value = "";
-      updateStrength(); updateMatchHint(); clearSignUpError(); signUpSuccess.classList.remove("show");
-      [suEmail, suPassword, suConfirm].forEach((el) => el.classList.remove("field-error","field-ok"));
-    }
-    function goToSignIn() {
-      clearSignUpError(); signUpSuccess.classList.remove("show");
-      authHeading.textContent = "Digital Recharge"; authSubtitle.textContent = "Sign in to continue to your dashboard";
-      const fromPanel = verifyPanel.classList.contains("hidden") ? signUpPanel : verifyPanel;
-      slidePanels(fromPanel, signInPanel, "back");
-      clearAuthError(); authPassword.value = ""; pendingVerifyUser = null;
-    }
-    authCreateBtn.addEventListener("click", goToSignUp);
-    backToSignInBtn.addEventListener("click", goToSignIn);
-
-    function updateStrength() {
-      const val = suPassword.value;
-      let score = 0;
-      if (val.length >= 6) score++;
-      if (val.length >= 10) score++;
-      if (/[A-Z]/.test(val) && /[a-z]/.test(val)) score++;
-      if (/\d/.test(val)) score++;
-      if (/[^A-Za-z0-9]/.test(val)) score++;
-      const pct = val.length === 0 ? 0 : Math.min(100, (score / 5) * 100);
-      strengthBar.style.width = pct + "%";
-      let color = "var(--danger)", label = "";
-      if (val.length === 0) { label = "\u00A0"; }
-      else if (score <= 1) { label = "Weak password"; color = "#ef4444"; }
-      else if (score <= 3) { label = "Okay password"; color = "#fbbf24"; }
-      else { label = "Strong password"; color = "#4ade80"; }
-      strengthBar.style.background = color; strengthLabel.textContent = label;
-      strengthLabel.style.color = val.length === 0 ? "var(--text-dim)" : color;
-    }
-    function updateMatchHint() {
-      if (!suConfirm.value) { matchHint.textContent = "\u00A0"; matchHint.className = "match-hint"; suConfirm.classList.remove("field-ok","field-error"); return; }
-      if (suConfirm.value === suPassword.value) {
-        matchHint.textContent = "✓ Passwords match"; matchHint.className = "match-hint ok";
-        suConfirm.classList.add("field-ok"); suConfirm.classList.remove("field-error");
-      } else {
-        matchHint.textContent = "Passwords don't match yet"; matchHint.className = "match-hint bad";
-        suConfirm.classList.remove("field-ok");
-      }
-    }
-    suPassword.addEventListener("input", () => { updateStrength(); updateMatchHint(); });
-    suConfirm.addEventListener("input", updateMatchHint);
-
-    function slidePanels(fromPanel, toPanel, dir) {
-      const outClass = dir === "forward" ? "slide-out-left" : "slide-out-right";
-      const inClass = dir === "forward" ? "slide-in-right" : "slide-in-left";
-      fromPanel.classList.add(outClass);
-      fromPanel.addEventListener("animationend", function handler() {
-        fromPanel.removeEventListener("animationend", handler);
-        fromPanel.classList.add("hidden"); fromPanel.classList.remove(outClass);
-        toPanel.classList.remove("hidden"); toPanel.classList.add(inClass);
-        toPanel.addEventListener("animationend", function h2() { toPanel.removeEventListener("animationend", h2); toPanel.classList.remove(inClass); });
-      });
-    }
-
-    function goToVerify(user) {
-      pendingVerifyUser = user;
-      authHeading.textContent = "Verify your email"; authSubtitle.textContent = "One last step to secure your account";
-      verifyEmailLabel.textContent = user.email || "your email";
-      verifyError.classList.remove("show"); verifySuccess.classList.remove("show");
-      checkVerifiedBtn.disabled = false; checkVerifiedBtn.textContent = "I've verified — Continue";
-      const fromPanel = !signUpPanel.classList.contains("hidden") ? signUpPanel
-        : (!signInPanel.classList.contains("hidden") ? signInPanel : null);
-      if (fromPanel) { slidePanels(fromPanel, verifyPanel, "forward"); }
-      else { signInPanel.classList.add("hidden"); signUpPanel.classList.add("hidden"); verifyPanel.classList.remove("hidden"); }
-    }
-
-    signUpForm.addEventListener("submit", async (e) => {
-      e.preventDefault(); clearSignUpError(); signUpSuccess.classList.remove("show");
-      const email = suEmail.value.trim(); const password = suPassword.value; const confirm = suConfirm.value;
-      [suEmail, suPassword, suConfirm].forEach((el) => el.classList.remove("field-error"));
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showSignUpError("Please enter a valid email address."); flashFieldError(suEmail); return; }
-      if (!password || password.length < 6) { showSignUpError("Password must be at least 6 characters."); flashFieldError(suPassword); return; }
-      if (password !== confirm) { showSignUpError("Passwords don't match. Please re-type them."); flashFieldError(suConfirm); return; }
-      signUpBtn.disabled = true; signUpBtn.innerHTML = '<span class="btn-spinner"></span> Creating account...';
-      try {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        const niceName = email.split("@")[0];
-        try { await updateProfile(cred.user, { displayName: niceName }); } catch(e) {}
-        await sendEmailVerification(cred.user);
-        showSignUpSuccess("✓ Account created! Check your email to verify it.");
-        goToVerify(cred.user);
-      } catch (err) {
-        console.error(err); showSignUpError(friendlyAuthError(err));
-        if (err && err.code === "auth/email-already-in-use") flashFieldError(suEmail);
-      } finally { signUpBtn.disabled = false; signUpBtn.textContent = "Create Account"; }
-    });
-
-    checkVerifiedBtn.addEventListener("click", async () => {
-      verifyError.classList.remove("show"); verifySuccess.classList.remove("show");
-      const user = pendingVerifyUser || auth.currentUser;
-      if (!user) { verifyError.textContent = "Session expired. Please sign up again."; verifyError.classList.add("show"); return; }
-      checkVerifiedBtn.disabled = true; checkVerifiedBtn.innerHTML = '<span class="btn-spinner"></span> Checking...';
-      try {
-        await reload(user);
-        if (user.emailVerified) {
-          verifySuccess.textContent = "✓ Email verified! Taking you to your dashboard...";
-          verifySuccess.classList.add("show"); checkVerifiedBtn.textContent = "Verified"; pendingVerifyUser = null;
-          await showAppScreen();
-        } else {
-          verifyError.textContent = "Not verified yet. Please open the link in the email we sent you, then try again.";
-          verifyError.classList.add("show"); checkVerifiedBtn.disabled = false; checkVerifiedBtn.textContent = "I've verified — Continue";
-        }
-      } catch (err) {
-        console.error(err); verifyError.textContent = "Couldn't check verification status. Please try again.";
-        verifyError.classList.add("show"); checkVerifiedBtn.disabled = false; checkVerifiedBtn.textContent = "I've verified — Continue";
-      }
-    });
-
-    resendVerifyBtn.addEventListener("click", async () => {
-      const user = pendingVerifyUser || auth.currentUser; if (!user) return;
-      resendVerifyBtn.disabled = true; const originalText = resendVerifyBtn.textContent;
-      resendVerifyBtn.innerHTML = '<span class="btn-spinner"></span> Resending...';
-      try {
-        await sendEmailVerification(user); verifyError.classList.remove("show");
-        verifySuccess.textContent = "✓ A new verification email was sent."; verifySuccess.classList.add("show");
-      } catch (err) {
-        console.error(err); verifySuccess.classList.remove("show");
-        verifyError.textContent = "Couldn't resend the email. Please try again shortly."; verifyError.classList.add("show");
-      } finally { resendVerifyBtn.disabled = false; resendVerifyBtn.textContent = originalText; }
-    });
-
-    useOtherAccountBtn.addEventListener("click", async () => {
-      pendingVerifyUser = null;
-      try { await signOut(auth); } catch(e) {}
-      goToSignIn();
-    });
-
-    logoutBtn.addEventListener("click", async () => {
-      accountDropdown.classList.add("hidden");
-      try { await signOut(auth); } catch(err) { console.error(err); }
-    });
-
-    // ---------- Firestore wallet ----------
-    function walletCollectionRef() { return collection(db, "wallets", currentUser.uid, "items"); }
-
-    async function loadWallet() {
-      wallet = [];
-      try {
-        const snap = await getDocs(walletCollectionRef());
-        wallet = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        wallet.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      } catch(e) { console.error(e); wallet = []; }
-    }
-    async function saveWalletItem(item) {
-      const { id, ...data } = item;
-      await setDoc(doc(walletCollectionRef(), id), data);
-    }
-    async function deleteWalletItemDoc(id) { await deleteDoc(doc(walletCollectionRef(), id)); }
-    function generateRandomCode() { return String(Math.floor(100000 + Math.random() * 900000)); }
-
-    // ---------- Card number pool ----------
-    async function isCardNumberUsed(number) { const snap = await getDoc(doc(db, "usedCardNumbers", number)); return snap.exists(); }
-    async function markCardNumberUsed(number) { await setDoc(doc(db, "usedCardNumbers", number), { usedAt: new Date().toISOString() }); }
-    async function releaseCardNumber(number) { if (!number) return; try { await deleteDoc(doc(db, "usedCardNumbers", number)); } catch(e) { console.error(e); } }
-    async function pickCardNumberForCard(cardId) {
-      const cardDef = CONFIG.CARDS.find((c) => c.id === cardId);
-      if (!cardDef || !Array.isArray(cardDef.cardNumbers)) return null;
-      for (const number of cardDef.cardNumbers) {
-        const used = await isCardNumberUsed(number);
-        if (!used) { await markCardNumberUsed(number); return number; }
-      }
-      return null;
-    }
-
-    // ---------- Card grid ----------
-    function renderCardGrid() {
-      cardGrid.innerHTML = "";
-      CONFIG.CARDS.forEach((card) => {
-        const btn = document.createElement("div");
-        btn.className = "recharge-card";
-        btn.innerHTML = `<div class="icon">💳</div><div class="amount">${card.label}</div>`;
-        btn.addEventListener("click", () => selectCard(card));
-        cardGrid.appendChild(btn);
-      });
-    }
-
-    function selectCard(card) {
-      selectedCard = card; selectedAmountLabel.textContent = card.label;
-      walletView.classList.add("hidden"); dashboardView.classList.add("hidden"); selectedView.classList.remove("hidden");
-    }
-    backBtn.addEventListener("click", () => { selectedView.classList.add("hidden"); dashboardView.classList.remove("hidden"); selectedCard = null; });
-
-    // ---------- Buy ----------
-    buyBtn.addEventListener("click", async () => {
-      if (!selectedCard || !currentUser) return;
-      buyBtn.disabled = true; const originalLabel = buyBtn.textContent;
-      buyBtn.innerHTML = '<span class="btn-spinner"></span> Adding...';
-      const item = {
-        id: "wi_" + Date.now(), cardId: selectedCard.id, label: selectedCard.label,
-        amount: selectedCard.amount, code: null, cardNumber: null,
-        verified: false, status: "pending", createdAt: new Date().toISOString()
-      };
-      try {
-        await saveWalletItem(item); wallet.unshift(item);
-        await showModal({ type: "success", title: "Added to wallet", message: selectedCard.label + " has been added to your wallet." });
-        selectedView.classList.add("hidden"); dashboardView.classList.add("hidden");
-        walletView.classList.remove("hidden"); selectedCard = null; renderWallet();
-      } catch (err) {
-        console.error(err); await showModal({ type: "error", title: "Couldn't add to wallet", message: "Please try again." });
-      } finally { buyBtn.disabled = false; buyBtn.textContent = originalLabel; }
-    });
-
-    // ---------- Wallet nav ----------
-    walletNavBtn.addEventListener("click", async () => {
-      dashboardView.classList.add("hidden"); selectedView.classList.add("hidden"); walletView.classList.remove("hidden");
-      await loadWallet(); renderWallet();
-    });
-    walletBackBtn.addEventListener("click", () => { walletView.classList.add("hidden"); dashboardView.classList.remove("hidden"); });
-
-    // ---------- Build bomb animation HTML ----------
-    function makeBombHtml(number) {
-      const COLORS = ['#fbbf24','#f97316','#ef4444','#4ade80','#60a5fa','#a78bfa','#f472b6','#fb923c','#34d399','#f87171'];
-      const shrapnels = Array.from({length: 18}, (_, i) => {
-        const angle = (360 / 18) * i + (Math.random() * 10 - 5);
-        const dist = 52 + Math.random() * 28;
-        const sx = Math.round(Math.cos(angle * Math.PI / 180) * dist);
-        const sy = Math.round(Math.sin(angle * Math.PI / 180) * dist);
-        const color = COLORS[i % COLORS.length];
-        const delay = (0.44 + i * 0.018).toFixed(3);
-        const size = 5 + Math.round(Math.random() * 5);
-        return `<span class="bomb-shrapnel" style="background:${color};width:${size}px;height:${size}px;--sx:${sx}px;--sy:${sy}px;animation-delay:${delay}s;"></span>`;
-      }).join('');
-      const smokes = Array.from({length: 5}, (_, i) => {
-        const smx = Math.round((Math.random() - 0.5) * 40);
-        const smy = Math.round(-20 - Math.random() * 30);
-        const delay = (0.5 + i * 0.07).toFixed(2);
-        return `<span class="bomb-smoke" style="--smx:${smx}px;--smy:${smy}px;animation-delay:${delay}s;"></span>`;
-      }).join('');
-      return `
-        <div class="bomb-stage">
-          <span class="bomb-icon">💣</span>
-          <div class="bomb-flash"></div>
-          ${shrapnels}
-          ${smokes}
-          <div class="bomb-number-reveal">${number}</div>
-        </div>
-      `;
-    }
-
-    // ---------- Render wallet ----------
-    function renderWallet() {
-      walletList.innerHTML = "";
-      if (wallet.length === 0) {
-        walletList.innerHTML = '<div class="wallet-empty">No purchases yet. Buy a recharge card to get started.</div>';
+    // Not confirmed yet — listen in real time; auto-completes once the SMS webhook writes it.
+    topupWaiting.classList.add("show");
+    topupSubmitBtn.disabled=true; topupSubmitBtn.textContent="Waiting for confirmation...";
+    stopRefListener();
+    refListenerUnsub = onSnapshot(refDocRef(refId), async (docSnap)=>{
+      if(!docSnap.exists()) return;
+      const data = docSnap.data();
+      if(data.usedBy) return; // already claimed by someone else
+      if(Number(data.amount) !== Number(amount)){
+        stopRefListener();
+        topupWaiting.classList.remove("show");
+        topupError.textContent="The amount confirmed by EZ Cash doesn't match what you entered. Please check and try again.";
+        topupError.classList.add("show");
+        topupSubmitBtn.disabled=false; topupSubmitBtn.textContent="Check & Add Funds";
         return;
       }
-
-      wallet.forEach((item) => {
-        const el = document.createElement("div");
-        el.className = "wallet-item";
-        const dateStr = new Date(item.createdAt).toLocaleString();
-        const statusClass = item.status === "sent" ? "sent" : "pending";
-        const statusLabel = item.status === "sent" ? "Sent" : "Pending";
-        const amountText = item.amount ? `${item.amount} LKR` : item.label;
-
-        let codeHtml = "";
-        let actionHtml = "";
-
-        if (item.status === "sent" && item.code && item.verified) {
-          const revealNumber = item.cardNumber || item.code;
-          // Use bomb animation only for items just verified this session
-          if (recentlyVerified.has(item.id)) {
-            codeHtml = makeBombHtml(revealNumber);
-          } else {
-            // Already seen — show static green number
-            codeHtml = `
-              <div class="wallet-item-code-wrap">
-                <div class="wallet-item-code">${revealNumber}</div>
-              </div>
-            `;
-          }
-          actionHtml = `
-            <div class="wallet-row-actions">
-              <button class="wallet-contact-btn" data-id="${item.id}">📲 Contact for Payment</button>
-            </div>
-            <div class="wallet-row-actions" style="margin-top:8px;">
-              <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
-              <button class="wallet-delete-btn" data-id="${item.id}">🗑 Delete</button>
-            </div>
-          `;
-        } else if (item.status === "sent" && item.code && !item.verified) {
-          codeHtml = `
-            <div class="hint" style="margin-top:0; margin-bottom:10px;">A 6-digit code was sent to your email. Enter it below to reveal your card.</div>
-            <div class="verify-row">
-              <input type="text" inputmode="numeric" maxlength="6" class="verify-input" data-id="${item.id}" placeholder="6-digit code" />
-              <button class="verify-btn" data-id="${item.id}">Reveal Card</button>
-            </div>
-          `;
-          actionHtml = `
-            <div class="wallet-row-actions" style="margin-top:10px;">
-              <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
-              <button class="wallet-delete-btn" data-id="${item.id}">🗑 Delete</button>
-            </div>
-          `;
-        } else {
-          actionHtml = `
-            <div class="wallet-row-actions">
-              <button class="wallet-generate-btn" data-id="${item.id}" style="flex:1;">🎰 Generate Code</button>
-              <button class="wallet-reset-btn" data-id="${item.id}">↺ Reset</button>
-              <button class="wallet-delete-btn" data-id="${item.id}">🗑 Delete</button>
-            </div>
-          `;
-        }
-
-        el.innerHTML = `
-          <div class="wallet-item-top">
-            <div class="wallet-item-amount">${amountText}</div>
-            <div class="wallet-item-status ${statusClass}">${statusLabel}</div>
-          </div>
-          <div class="wallet-item-date">${dateStr}</div>
-          ${codeHtml}
-          ${actionHtml}
-        `;
-        walletList.appendChild(el);
-      });
-
-      // Wire up buttons
-      walletList.querySelectorAll(".wallet-generate-btn").forEach((btn) => {
-        btn.addEventListener("click", () => generateCodeForWalletItem(btn.getAttribute("data-id"), btn));
-      });
-      walletList.querySelectorAll(".verify-btn").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const id = btn.getAttribute("data-id");
-          const input = walletList.querySelector(`.verify-input[data-id="${id}"]`);
-          verifyWalletItemCode(id, input ? input.value : "");
-        });
-      });
-      walletList.querySelectorAll(".verify-input").forEach((input) => {
-        input.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") verifyWalletItemCode(input.getAttribute("data-id"), input.value);
-        });
-      });
-      walletList.querySelectorAll(".wallet-reset-btn").forEach((btn) => {
-        btn.addEventListener("click", () => resetWalletItem(btn.getAttribute("data-id")));
-      });
-      walletList.querySelectorAll(".wallet-delete-btn").forEach((btn) => {
-        btn.addEventListener("click", () => deleteWalletItem(btn.getAttribute("data-id")));
-      });
-      walletList.querySelectorAll(".wallet-contact-btn").forEach((btn) => {
-        btn.addEventListener("click", () => contactOwnerForPayment(btn.getAttribute("data-id")));
-      });
-    }
-
-    function contactOwnerForPayment(itemId) {
-      const item = wallet.find((w) => w.id === itemId); if (!item) return;
-      const waNumber = "94" + CONFIG.WHATSAPP_NUMBER.replace(/^0/, "");
-      const waMessage = encodeURIComponent("Hi, I'd like to complete payment for my " + item.label + " recharge card. Please confirm and send me the payment details.");
-      window.open("https://wa.me/" + waNumber + "?text=" + waMessage, "_blank");
-    }
-
-    async function resetWalletItem(itemId) {
-      const item = wallet.find((w) => w.id === itemId); if (!item) return;
-      const ok = await showConfirm({ title: "Reset this request?", message: "Reset this " + (item.amount ? item.amount + " LKR" : item.label) + " request? The current code will be cleared and it will go back to pending.", okText: "Reset", danger: true });
-      if (!ok) return;
-      await releaseCardNumber(item.cardNumber);
-      item.cardNumber = null; item.code = null; item.verified = false; item.status = "pending"; item.createdAt = new Date().toISOString();
-      recentlyVerified.delete(itemId);
-      try { await saveWalletItem(item); renderWallet(); }
-      catch(err) { console.error(err); await showModal({ type: "error", title: "Couldn't reset", message: "Please try again." }); }
-    }
-
-    async function deleteWalletItem(itemId) {
-      const item = wallet.find((w) => w.id === itemId); if (!item) return;
-      const ok = await showConfirm({ title: "Delete this request?", message: "Delete this " + (item.amount ? item.amount + " LKR" : item.label) + " request from your wallet? This cannot be undone.", okText: "Delete", danger: true });
-      if (!ok) return;
-      try {
-        await releaseCardNumber(item.cardNumber);
-        await deleteWalletItemDoc(itemId);
-        wallet = wallet.filter((w) => w.id !== itemId);
-        recentlyVerified.delete(itemId);
-        renderWallet();
-      } catch(err) { console.error(err); await showModal({ type: "error", title: "Couldn't delete", message: "Please try again." }); }
-    }
-
-    async function verifyWalletItemCode(itemId, enteredValue) {
-      const item = wallet.find((w) => w.id === itemId); if (!item) return;
-      const entered = (enteredValue || "").trim();
-      if (entered.length !== 6 || !/^\d{6}$/.test(entered)) {
-        await showModal({ type: "error", title: "Invalid code", message: "Please enter the 6-digit code that was sent to your email." }); return;
-      }
-      if (entered !== item.code) {
-        await showModal({ type: "error", title: "Code doesn't match", message: "Please check your email and try again." }); return;
-      }
-      item.verified = true;
-      // Mark this item for bomb animation on next render
-      recentlyVerified.add(itemId);
-      try {
-        await saveWalletItem(item);
-        renderWallet();
-        await showModal({ type: "success", title: "💥 Card Revealed!", message: "Your recharge card number has appeared! Tap \"Contact for Payment\" to confirm payment with the owner." });
-      } catch(err) { console.error(err); await showModal({ type: "error", title: "Couldn't verify", message: "Please try again." }); }
-    }
-
-    async function generateCodeForWalletItem(itemId, btnEl) {
-      const item = wallet.find((w) => w.id === itemId); if (!item) return;
-      if (!window.emailjs) { await showModal({ type: "error", title: "Email unavailable", message: "Email service is not available right now. Please try again later." }); return; }
-      const code = generateRandomCode();
-      if (btnEl) { btnEl.disabled = true; btnEl.innerHTML = '<span class="btn-spinner"></span> Sending...'; }
-      authLoader.classList.remove("hidden");
-      let cardNumber;
-      try { cardNumber = await pickCardNumberForCard(item.cardId); } catch(err) { console.error(err); cardNumber = null; }
-      if (!cardNumber) {
-        authLoader.classList.add("hidden");
-        if (btnEl) { btnEl.disabled = false; btnEl.textContent = "🎰 Generate Code"; }
-        await showModal({ type: "error", title: "Out of stock", message: "Sorry, all " + item.label + " card numbers are currently out of stock. Please contact the owner on WhatsApp." }); return;
-      }
-      const templateParams = {
-        user_name: currentUser ? currentUser.name : "Unknown User",
-        user_email: currentUser ? currentUser.email : "Unknown",
-        selected_card: item.label,
-        payment_code: code
-      };
-      try {
-        await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, templateParams);
-        item.code = code; item.cardNumber = cardNumber; item.verified = false; item.status = "sent";
-        await saveWalletItem(item);
-        renderWallet();
-        authLoader.classList.add("hidden");
-        await showModal({ type: "success", title: "Code sent! 📧", message: "A 6-digit verification code was sent to your email. Enter it in your wallet to reveal the card number with a BOOM! 💥" });
-      } catch(err) {
-        console.error(err); authLoader.classList.add("hidden");
-        await releaseCardNumber(cardNumber);
-        const detail = (err && (err.text || err.message)) || "Unknown error";
-        await showModal({ type: "error", title: "Couldn't send code", message: detail });
-        if (btnEl) { btnEl.disabled = false; btnEl.textContent = "🎰 Generate Code"; }
-      }
-    }
-
-    // ---------- Account dropdown ----------
-    accountBtn.addEventListener("click", (e) => { e.stopPropagation(); accountDropdown.classList.toggle("hidden"); });
-    document.addEventListener("click", (e) => { if (!accountDropdown.contains(e.target) && e.target !== accountBtn) accountDropdown.classList.add("hidden"); });
-
-    // ---------- Screen switching ----------
-    function showLoginScreen() {
-      bootLoader.classList.add("hidden"); authLoader.classList.add("hidden");
-      appScreen.classList.add("hidden"); loginScreen.classList.remove("hidden");
-      clearAuthError(); authEmail.value = ""; authPassword.value = "";
-      signUpPanel.classList.add("hidden"); signUpPanel.classList.remove("slide-in-right","slide-out-right");
-      verifyPanel.classList.add("hidden"); verifyPanel.classList.remove("slide-in-right","slide-out-right","slide-in-left","slide-out-left");
-      signInPanel.classList.remove("hidden"); signInPanel.classList.remove("slide-out-left","slide-in-left");
-      authHeading.textContent = "Digital Recharge"; authSubtitle.textContent = "Sign in to continue to your dashboard";
-      signUpBtn.disabled = false; signUpBtn.textContent = "Create Account"; pendingVerifyUser = null;
-    }
-
-    async function showAppScreen() {
-      bootLoader.classList.add("hidden"); loginScreen.classList.add("hidden"); appScreen.classList.remove("hidden");
-      dashboardView.classList.remove("hidden"); selectedView.classList.add("hidden"); walletView.classList.add("hidden");
-      userNameLabel.textContent = currentUser ? `${currentUser.name}\n${currentUser.email}` : "—";
-      renderCardGrid();
-      await loadWallet(); renderWallet();
-      authLoader.classList.add("hidden");
-    }
-
-    // ---------- Auth state ----------
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const isPasswordAccount = user.providerData.some((p) => p.providerId === "password");
-        if (isPasswordAccount && !user.emailVerified) {
-          currentUser = null; wallet = []; bootLoader.classList.add("hidden");
-          appScreen.classList.add("hidden"); loginScreen.classList.remove("hidden");
-          goToVerify(user); return;
-        }
-        currentUser = { uid: user.uid, name: user.displayName || (user.email ? user.email.split("@")[0] : "User"), email: user.email || "" };
-        await showAppScreen();
-      } else {
-        currentUser = null; wallet = []; showLoginScreen();
-      }
+      try{
+        await setDoc(refDocRef(refId), {usedBy: currentUser.uid, usedAt:new Date().toISOString()}, {merge:true});
+        await finishTopupSuccess(amount);
+      }catch(e){ console.error(e); }
     });
-  })();
+  }catch(err){
+    console.error(err);
+    if(err && err.code==="already-used"){ topupError.textContent="This Reference Number has already been used."; }
+    else if(err && err.code==="amount-mismatch"){ topupError.textContent="The amount doesn't match what EZ Cash confirmed for this reference."; }
+    else{ topupError.textContent="Something went wrong. Please try again."; }
+    topupError.classList.add("show");
+    topupSubmitBtn.disabled=false; topupSubmitBtn.textContent="Check & Add Funds";
+  }
+});
+
+/* ─── Nav / views ─── */
+function setActiveView(view){
+  [navDashboard,navTopup,navHistory].forEach(b=>b.classList.remove("active"));
+  [dashboardView,selectedView,topupView,walletView].forEach(v=>v.classList.add("hidden"));
+  stopRefListener();
+  if(view==="dashboard"){ navDashboard.classList.add("active"); dashboardView.classList.remove("hidden"); }
+  else if(view==="selected"){ navDashboard.classList.add("active"); selectedView.classList.remove("hidden"); }
+  else if(view==="topup"){ navTopup.classList.add("active"); topupView.classList.remove("hidden"); resetTopupForm(); renderBalance(); }
+  else if(view==="history"){ navHistory.classList.add("active"); walletView.classList.remove("hidden"); }
+}
+navDashboard.addEventListener("click",()=>setActiveView("dashboard"));
+navTopup.addEventListener("click",()=>setActiveView("topup"));
+navHistory.addEventListener("click", async ()=>{ await loadWalletItems(); renderWallet(); setActiveView("history"); });
+
+/* ─── Account dropdown ─── */
+accountBtn.addEventListener("click",e=>{ e.stopPropagation(); accountDropdown.classList.toggle("hidden"); });
+document.addEventListener("click",e=>{ if(!accountDropdown.contains(e.target)&&e.target!==accountBtn) accountDropdown.classList.add("hidden"); });
+
+/* ─── Screen switching ─── */
+function showLoginScreen(){
+  bootLoader.classList.add("hidden"); authLoader.classList.add("hidden"); appScreen.classList.add("hidden"); loginScreen.classList.remove("hidden");
+}
+async function showAppScreen(){
+  bootLoader.classList.add("hidden"); loginScreen.classList.add("hidden"); appScreen.classList.remove("hidden");
+  userNameLabel.textContent=currentUser?`${currentUser.name}\n${currentUser.email}`:"—";
+  renderCardGrid();
+  await loadWalletBalance();
+  setActiveView("dashboard");
+  authLoader.classList.add("hidden");
+}
+
+/* ─── Firebase auth state ─── */
+onAuthStateChanged(auth,async user=>{
+  if(user){
+    currentUser={uid:user.uid,name:user.displayName||(user.email?user.email.split("@")[0]:"User"),email:user.email||""};
+    await showAppScreen();
+  }else{ currentUser=null; wallet=[]; walletBalance=0; showLoginScreen(); }
+});
+
+})();
 </script>
 </body>
 </html>
